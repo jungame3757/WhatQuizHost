@@ -3,17 +3,18 @@ const cacheName = "whatquiz-cache-v1";
 
 // 캐싱할 필수 콘텐츠 목록 (더 포괄적으로 업데이트)
 const contentToCache = [
-    "./",
-    "./index.html",
-    "./Build/firebase.loader.js",
-    "./Build/firebase.framework.js",
-    "./Build/firebase.data",
-    "./Build/firebase.wasm",
-    "./TemplateData/favicon.ico",
-    "./manifest.webmanifest",
-    "./js/firebase-auth.js",
-    "./js/firebase-init.js",
-    "./js/unity-bridge.js"
+    "/",
+    "index.html",
+    "Build/firebase.loader.js",
+    "Build/firebase.framework.js",
+    "Build/firebase.data",
+    "Build/firebase.wasm",
+    "TemplateData/favicon.ico",
+    "manifest.webmanifest",
+    "StreamingAssets",
+    "js/firebase-auth.js",
+    "js/firebase-init.js",
+    "js/unity-bridge.js"
 ];
 
 // 이전 캐시 제거 함수

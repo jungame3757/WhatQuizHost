@@ -4,6 +4,18 @@
 const UnityBridgeModule = (function() {
     let unityInstance = null;
     
+    // UTF8ToString 대체 함수 (Unity 인스턴스 없이도 동작하도록 구현)
+    function safeUTF8ToString(ptr) {
+        if (window.UTF8ToString) {
+            return window.UTF8ToString(ptr);
+        } else if (unityInstance && unityInstance.Module) {
+            return unityInstance.Module.UTF8ToString(ptr);
+        } else {
+            console.warn("UTF8ToString을 사용할 수 없습니다 - Unity 인스턴스가 아직 준비되지 않았습니다.");
+            return "";
+        }
+    }
+    
     /**
      * Unity 인스턴스 설정
      * @param {Object} instance - Unity 인스턴스
@@ -70,6 +82,21 @@ const UnityBridgeModule = (function() {
     return {
         setUnityInstance: setUnityInstance,
         sendMessage: sendMessage,
-        log: log
+        log: log,
+        safeUTF8ToString: safeUTF8ToString
     };
+    
 })();
+
+// 전역에 UTF8ToString 함수를 노출 - 즉시 호출되도록 변경
+if (!window.UTF8ToString) {
+    window.UTF8ToString = function(ptr) {
+        if (window.unityInstance && window.unityInstance.Module) {
+            return window.unityInstance.Module.UTF8ToString(ptr);
+        } else {
+            console.warn("UTF8ToString을 사용할 수 없습니다 - Unity 인스턴스가 아직 준비되지 않았습니다.");
+            // 임시 방안: ptr가 문자열이면 그대로 반환, 아니면 빈 문자열
+            return typeof ptr === 'string' ? ptr : "";
+        }
+    };
+}

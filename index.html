@@ -171,14 +171,15 @@
     })(window, document, "clarity", "script", "qqg7cwltt7");
   </script>
   
+  <!-- 먼저 Unity 로더 스크립트가 로드된 후 Firebase SDK가 로드되도록 순서 변경 -->
+  <!-- 모듈화된 JavaScript 파일 로드 -->
+  <script src="js/unity-bridge.js"></script>
+  
   <!-- Firebase SDK 추가 -->
   <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
-  
-  <!-- 모듈화된 JavaScript 파일 로드 -->
-  <script src="./js/firebase-init.js"></script>
-  <script src="./js/firebase-auth.js"></script>
-  <script src="./js/unity-bridge.js"></script>
+  <script src="js/firebase-init.js"></script>
+  <script src="js/firebase-auth.js"></script>
 </head>
 <body>
 <div id="unity-container">
@@ -282,6 +283,17 @@
   // 버전이 다르면 캐시 버스트 매개변수 추가
   var cacheBuster = (storedVersion !== currentVersion) ? "?v=" + Date.now() : "";
   localStorage.setItem("whatQuizVersion", currentVersion);
+  
+  // 비어있는 UnityLoader 객체 추가 (이전 버전 호환성을 위해)
+  if (!window.UnityLoader) {
+    window.UnityLoader = {
+      // 기본 instantiate 함수 구현
+      instantiate: function(container, config, onProgress) {
+        console.log("UnityLoader.instantiate 호출 - createUnityInstance로 전달");
+        return createUnityInstance(container, config, onProgress);
+      }
+    };
+  }
 
   // 로더 스크립트 로드
   var script = document.createElement("script");
@@ -314,7 +326,18 @@
       loadingBar.style.display = "none";
       
       // Unity 인스턴스를 전역으로 저장하고 Firebase 초기화
+      window.unityInstance = unityInstance; // 전역 변수로 저장
       UnityBridgeModule.setUnityInstance(unityInstance);
+      
+      // 전역 함수로 UTF8ToString 함수 추가 (Unity에서 문자열 변환용)
+      window.UTF8ToString = function(ptr) {
+        if (typeof unityInstance !== 'undefined' && unityInstance.Module) {
+          return unityInstance.Module.UTF8ToString(ptr);
+        } else {
+          console.error("Unity 인스턴스가 초기화되지 않았습니다.");
+          return "";
+        }
+      };
 
       // 전체 화면 처리를 위한 이벤트 리스너
       window.addEventListener('resize', function() {

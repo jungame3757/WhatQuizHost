@@ -8,8 +8,13 @@ const FirebaseAuthModule = (function() {
      * @param {string} password - 로그인 비밀번호
      */
     function login(email, password) {
-        const emailStr = UTF8ToString(email);
-        const passwordStr = UTF8ToString(password);
+        // UTF8ToString 함수 안전한 참조
+        const emailStr = typeof UnityBridgeModule !== 'undefined' ? 
+            UnityBridgeModule.safeUTF8ToString(email) : 
+            (window.UTF8ToString ? window.UTF8ToString(email) : "");
+        const passwordStr = typeof UnityBridgeModule !== 'undefined' ? 
+            UnityBridgeModule.safeUTF8ToString(password) : 
+            (window.UTF8ToString ? window.UTF8ToString(password) : "");
         
         console.log("JavaScript: Firebase 로그인 시도 - " + emailStr);
         
@@ -41,8 +46,13 @@ const FirebaseAuthModule = (function() {
      * @param {string} password - 설정할 비밀번호
      */
     function register(email, password) {
-        const emailStr = UTF8ToString(email);
-        const passwordStr = UTF8ToString(password);
+        // UTF8ToString 함수 안전한 참조
+        const emailStr = typeof UnityBridgeModule !== 'undefined' ? 
+            UnityBridgeModule.safeUTF8ToString(email) : 
+            (window.UTF8ToString ? window.UTF8ToString(email) : "");
+        const passwordStr = typeof UnityBridgeModule !== 'undefined' ? 
+            UnityBridgeModule.safeUTF8ToString(password) : 
+            (window.UTF8ToString ? window.UTF8ToString(password) : "");
         
         console.log("JavaScript: Firebase 회원가입 시도 - " + emailStr);
         
@@ -84,7 +94,10 @@ const FirebaseAuthModule = (function() {
      * @param {string} email - 비밀번호를 재설정할 이메일 주소
      */
     function resetPassword(email) {
-        const emailStr = UTF8ToString(email);
+        // UTF8ToString 함수 안전한 참조
+        const emailStr = typeof UnityBridgeModule !== 'undefined' ? 
+            UnityBridgeModule.safeUTF8ToString(email) : 
+            (window.UTF8ToString ? window.UTF8ToString(email) : "");
         
         console.log("JavaScript: Firebase 비밀번호 재설정 시도 - " + emailStr);
         
