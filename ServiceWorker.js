@@ -3,15 +3,17 @@ const cacheName = "whatquiz-cache-v1";
 
 // 캐싱할 필수 콘텐츠 목록 (더 포괄적으로 업데이트)
 const contentToCache = [
-    "/",
-    "index.html",
-    "Build/WhatQuizShow.loader.js",
-    "Build/WhatQuizShow.framework.js",
-    "Build/WhatQuizShow.data",
-    "Build/WhatQuizShow.wasm",
-    "TemplateData/favicon.ico",
-    "manifest.webmanifest",
-    "StreamingAssets"
+    "./",
+    "./index.html",
+    "./Build/firebase.loader.js",
+    "./Build/firebase.framework.js",
+    "./Build/firebase.data",
+    "./Build/firebase.wasm",
+    "./TemplateData/favicon.ico",
+    "./manifest.webmanifest",
+    "./js/firebase-auth.js",
+    "./js/firebase-init.js",
+    "./js/unity-bridge.js"
 ];
 
 // 이전 캐시 제거 함수
@@ -91,13 +93,13 @@ self.addEventListener('fetch', function(e) {
             const cachedResponse = await caches.match(e.request);
 
             // 캐시에 있고 Unity 파일이 아니면 캐시 반환
-            if (cachedResponse && !e.request.url.includes('WhatQuizShow')) {
+            if (cachedResponse && !e.request.url.includes('firebase')) {
                 console.log(`[Service Worker] 캐시에서 반환: ${e.request.url}`);
                 return cachedResponse;
             }
 
             // 네트워크 요청 생성 (Unity 파일에 대해서는 항상 캐시 버스팅)
-            const networkRequestUrl = e.request.url.includes('WhatQuizShow') && !hasCacheBustParam ?
+            const networkRequestUrl = e.request.url.includes('firebase') && !hasCacheBustParam ?
                 `${e.request.url}${requestUrl.search ? '&' : '?'}v=${Date.now()}` :
                 e.request.url;
 
