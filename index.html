@@ -8,14 +8,33 @@
     <link rel="stylesheet" href="TemplateData/style.css">
     <link rel="manifest" href="manifest.webmanifest">
     
-    <!-- Firebase SDK -->
+    <!-- Firebase SDK 추가 (CDN 로드) -->
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
     
     <!-- 커스텀 JavaScript 파일 -->
+    <script src="js/unity-bridge.js"></script>
     <script src="js/firebase-init.js"></script>
     <script src="js/firebase-auth.js"></script>
-    <script src="js/unity-bridge.js"></script>
+    
+    <!-- 로딩 상태 추적을 위한 스크립트 -->
+    <script>
+      // Firebase 초기화 상태 추적
+      window.firebaseLoaded = false;
+      window.unityLoaded = false;
+      
+      // 페이지 로드 완료 시 Firebase 초기화 시도
+      window.addEventListener('DOMContentLoaded', function() {
+        console.log('페이지 로드 완료 - Firebase 초기화 시도');
+        if (typeof FirebaseModule !== 'undefined') {
+          FirebaseModule.initialize();
+          window.firebaseLoaded = true;
+          console.log('Firebase 초기화 성공');
+        } else {
+          console.error('Firebase 모듈을 찾을 수 없습니다.');
+        }
+      });
+    </script>
   </head>
   <body>
     <div id="unity-container">
@@ -104,18 +123,30 @@
         }).then((unityInstance) => {
           loadingBar.style.display = "none";
           
-          // Unity 인스턴스를 설정하고 Firebase 초기화
+          // Unity 인스턴스를 설정하고 Firebase 연동
+          window.unityInstance = unityInstance; // 기본 설정
+          window.unityLoaded = true;
+          console.log('Unity 인스턴스 로드 완료');
+          
           if (typeof UnityBridgeModule !== 'undefined') {
             UnityBridgeModule.setUnityInstance(unityInstance);
+            console.log('Unity Bridge 모듈 설정 완료');
           } else {
             console.error("UnityBridgeModule이 로드되지 않았습니다.");
-            window.unityInstance = unityInstance; // 기본 설정
           }
           
-          // Firebase 초기화
+          // Firebase 초기화 상태 확인 및 사용자 정보 전송
           if (typeof FirebaseModule !== 'undefined') {
-            FirebaseModule.initialize();
+            // Firebase가 아직 초기화되지 않았다면 재시도
+            if (!window.firebaseLoaded) {
+              FirebaseModule.initialize();
+              window.firebaseLoaded = true;
+              console.log('Firebase 지연 초기화 성공');
+            }
+            
+            // 저장된 사용자 정보 확인 및 전송
             FirebaseModule.checkAndSendSavedUserInfo();
+            console.log('사용자 정보 확인 완료');
           } else {
             console.error("FirebaseModule이 로드되지 않았습니다.");
           }
