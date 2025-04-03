@@ -9,11 +9,9 @@ const FirebaseAuthModule = (function() {
      */
     function login(email, password) {
         // UTF8ToString 함수 안전한 참조
-        const emailStr = typeof UnityBridgeModule !== 'undefined' ? 
-            UnityBridgeModule.safeUTF8ToString(email) : 
+        const emailStr = typeof UnityBridgeModule !== 'undefined' ? email : 
             (window.UTF8ToString ? window.UTF8ToString(email) : "");
-        const passwordStr = typeof UnityBridgeModule !== 'undefined' ? 
-            UnityBridgeModule.safeUTF8ToString(password) : 
+        const passwordStr = typeof UnityBridgeModule !== 'undefined' ? password : 
             (window.UTF8ToString ? window.UTF8ToString(password) : "");
         
         console.log("JavaScript: Firebase 로그인 시도 - " + emailStr);
@@ -47,11 +45,9 @@ const FirebaseAuthModule = (function() {
      */
     function register(email, password) {
         // UTF8ToString 함수 안전한 참조
-        const emailStr = typeof UnityBridgeModule !== 'undefined' ? 
-            UnityBridgeModule.safeUTF8ToString(email) : 
+        const emailStr = typeof UnityBridgeModule !== 'undefined' ? email : 
             (window.UTF8ToString ? window.UTF8ToString(email) : "");
-        const passwordStr = typeof UnityBridgeModule !== 'undefined' ? 
-            UnityBridgeModule.safeUTF8ToString(password) : 
+        const passwordStr = typeof UnityBridgeModule !== 'undefined' ? password : 
             (window.UTF8ToString ? window.UTF8ToString(password) : "");
         
         console.log("JavaScript: Firebase 회원가입 시도 - " + emailStr);
@@ -95,8 +91,7 @@ const FirebaseAuthModule = (function() {
      */
     function resetPassword(email) {
         // UTF8ToString 함수 안전한 참조
-        const emailStr = typeof UnityBridgeModule !== 'undefined' ? 
-            UnityBridgeModule.safeUTF8ToString(email) : 
+        const emailStr = typeof UnityBridgeModule !== 'undefined' ? email : 
             (window.UTF8ToString ? window.UTF8ToString(email) : "");
         
         console.log("JavaScript: Firebase 비밀번호 재설정 시도 - " + emailStr);
