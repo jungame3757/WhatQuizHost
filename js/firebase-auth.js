@@ -9,7 +9,7 @@ const FirebaseAuthModule = (function() {
      */
     function login(email, password) {
         // UTF8ToString 함수 안전한 참조
-        const emailStr = typeof UnityBridgeModule !== 'undefined' ? email : 
+        const emailStr = typeof UnityBridgeModule !== 'undefined' ? email: 
             (window.UTF8ToString ? window.UTF8ToString(email) : "");
         const passwordStr = typeof UnityBridgeModule !== 'undefined' ? password : 
             (window.UTF8ToString ? window.UTF8ToString(password) : "");
