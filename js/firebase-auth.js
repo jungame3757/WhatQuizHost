@@ -83,7 +83,7 @@ const FirebaseAuthModule = (function() {
                 // 회원가입 실패
                 const errorCode = error.code;
                 const errorMessage = error.message;
-                console.error("[FirebaseAuthModule.register] 회원가입 실패: " + errorMessage + " (" + errorCode + ")");
+                console.error("[FirebaseAuthModule.register]" + emailStr + "회원가입 실패: " + errorMessage + " (" + errorCode + ")");
                 window.unityInstance.SendMessage('AuthManager', 'HandleRegisterFailed', errorMessage);
                 console.log("[FirebaseAuthModule.register] 오류 처리 완료");
             });
