@@ -18,16 +18,17 @@ const FirebaseModule = (function() {
     /**
      * Firebase 초기화 함수
      */
+    let pendingOperations = [];
+    
     function initialize() {
         console.log("[FirebaseModule.initialize] 시작");
         if (isInitialized) {
             console.log("[FirebaseModule.initialize] Firebase가 이미 초기화되어 있습니다.");
-            return;
+            return true;
         }
 
         try {
             // Firebase 초기화
-            console.log("[FirebaseModule.initialize] 초기화 시도: ", firebaseConfig);
             firebase.initializeApp(firebaseConfig);
             isInitialized = true;
             console.log("[FirebaseModule.initialize] Firebase 초기화 성공");
@@ -52,13 +53,12 @@ const FirebaseModule = (function() {
                     }
                 }
             });
-
-            console.log("[FirebaseModule.initialize] 옵저버 설정 완료");
+            executePendingOperations();
+            return true;
         } catch (error) {
             console.error("[FirebaseModule.initialize] Firebase 초기화 오류:", error);
+            return false;
         }
-
-        console.log("[FirebaseModule.initialize] 완료");
     }
 
     /**
@@ -86,12 +86,24 @@ const FirebaseModule = (function() {
         }
     }
 
-    // 공개 API
+    // 작업 대기 함수 추가
+    function addPendingOperation(operation) {
+        pendingOperations.push(operation);
+    }
+
+    // 초기화 상태 확인 함수
+    function isFirebaseInitialized() {
+        return isInitialized;
+    }
+
+    // 공개 API에 새 함수 추가
     return {
         initialize: initialize,
         getConfig: function () {
-            return {...firebaseConfig}; // 설정 정보의 복사본 반환
+            return {...firebaseConfig};
         },
-        checkAndSendSavedUserInfo: checkAndSendSavedUserInfo
+        checkAndSendSavedUserInfo: checkAndSendSavedUserInfo,
+        isInitialized: isFirebaseInitialized,
+        addPendingOperation: addPendingOperation
     };
 })();

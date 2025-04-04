@@ -35,6 +35,62 @@
         }
       });
     </script>
+    <script>
+      // 작업 대기 큐 시스템 추가
+      window.pendingOperations = [];
+      window.moduleInitialized = false;
+
+      // Unity 모듈 초기화 상태 확인 함수
+      function checkUnityModuleInitialization() {
+        return typeof Module !== 'undefined' && Module.HEAPU8;
+      }
+
+      // 대기 중인 작업 실행 함수
+      function executePendingOperations() {
+        console.log("대기 중인 작업 실행 시도, 작업 수: " + window.pendingOperations.length);
+        if (!checkUnityModuleInitialized()) {
+          console.log("Unity Module이 아직 초기화되지 않았습니다. 대기 작업 실행 지연");
+          setTimeout(executePendingOperations, 500);
+          return;
+        }
+
+        window.moduleInitialized = true;
+        console.log("Unity Module 초기화 완료, 대기 작업 실행 시작");
+
+        // 대기 중인 작업 복사 후 큐 비우기 (실행 중 새 작업 추가 방지)
+        var operations = [...window.pendingOperations];
+        window.pendingOperations = [];
+
+        // 작업 실행
+        for (var i = 0; i < operations.length; i++) {
+          try {
+            console.log("대기 작업 실행 #" + (i+1));
+            operations[i]();
+          } catch (e) {
+            console.error("대기 작업 실행 중 오류:", e);
+          }
+        }
+      }
+
+      // 작업 대기 큐에 추가하는 함수
+      function addPendingOperation(operation) {
+        if (window.moduleInitialized && checkUnityModuleInitialized()) {
+          // 이미 초기화되었으면 바로 실행
+          try {
+            operation();
+          } catch (e) {
+            console.error("작업 실행 중 오류:", e);
+          }
+        } else {
+          // 초기화 전이면 대기 큐에 추가
+          window.pendingOperations.push(operation);
+          console.log("작업이 대기 큐에 추가됨. 현재 대기 작업 수: " + window.pendingOperations.length);
+        }
+      }
+
+      // 전역으로 사용할 수 있게 함수 노출
+      window.addPendingOperation = addPendingOperation;
+    </script>
   </head>
   <body>
     <div id="unity-container">
@@ -122,11 +178,21 @@
           progressBarFull.style.width = 100 * progress + "%";
         }).then((unityInstance) => {
           loadingBar.style.display = "none";
-          
+
           // Unity 인스턴스를 설정하고 Firebase 연동
           window.unityInstance = unityInstance; // 기본 설정
           window.unityLoaded = true;
           console.log('Unity 인스턴스 로드 완료');
+
+          // Unity 모듈 초기화 확인 및 대기 작업 실행
+          window.moduleInitialized = checkUnityModuleInitialization();
+          if (window.moduleInitialized) {
+            console.log("Unity Module이 이미 초기화되어 있음. 대기 작업 즉시 실행");
+            executePendingOperations();
+          } else {
+            console.log("Unity Module 초기화 대기 중...");
+            setTimeout(executePendingOperations, 1000); // 1초 후 실행 시도
+          }
           
           if (typeof UnityBridgeModule !== 'undefined') {
             UnityBridgeModule.setUnityInstance(unityInstance);

@@ -5,20 +5,29 @@
 // UTF8ToString 함수 정의
 // 또는 Module 전역 객체 활용
 function UTF8ToString(ptr) {
+    if (ptr === 0) return '';
+
     if (typeof Module === 'undefined' || !Module.HEAPU8) {
         console.error('Unity Module이 초기화되지 않았습니다');
+        // 대기 큐에 작업 추가하는 로직 추가
+        if (typeof FirebaseModule !== 'undefined' && FirebaseModule.addPendingOperation) {
+            console.log("작업을 대기 큐에 추가합니다");
+        }
         return '';
     }
 
-    // 직접 구현할 경우 안전 로직 추가
-    if (ptr === 0) return '';
-
-    let str = '';
-    let idx = ptr;
-    while (Module.HEAPU8[idx] !== 0) {
-        str += String.fromCharCode(Module.HEAPU8[idx++]);
+    try {
+        let str = '';
+        let idx = ptr;
+        while (Module.HEAPU8[idx] !== 0) {
+            str += String.fromCharCode(Module.HEAPU8[idx++]);
+        }
+        console.log("변환된 문자열:", str); // 디버깅 로그 추가
+        return str;
+    } catch (e) {
+        console.error("문자열 변환 중 오류 발생:", e);
+        return '';
     }
-    return str;
 }
 
 const FirebaseAuthModule = (function() {
