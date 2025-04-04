@@ -1,226 +1,161 @@
 <!DOCTYPE html>
-<html lang="en-us">
-  <head>
-    <meta charset="utf-8">
-    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
-    <title>Unity Web Player | WhatQuizBase</title>
-    <link rel="shortcut icon" href="TemplateData/favicon.ico">
-    <link rel="stylesheet" href="TemplateData/style.css">
-    <link rel="manifest" href="manifest.webmanifest">
-    
-    <!-- Firebase SDK 추가 (CDN 로드) -->
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
-    
-    <!-- 커스텀 JavaScript 파일 -->
-    <script src="js/unity-bridge.js"></script>
-    <script src="js/firebase-init.js"></script>
-    <script src="js/firebase-auth.js"></script>
-    
-    <!-- 로딩 상태 추적을 위한 스크립트 -->
-    <script>
-      // Firebase 초기화 상태 추적
-      window.firebaseLoaded = false;
-      window.unityLoaded = false;
-      
-      // 페이지 로드 완료 시 Firebase 초기화 시도
-      window.addEventListener('DOMContentLoaded', function() {
-        console.log('페이지 로드 완료 - Firebase 초기화 시도');
-        if (typeof FirebaseModule !== 'undefined') {
-          FirebaseModule.initialize();
-          window.firebaseLoaded = true;
-          console.log('Firebase 초기화 성공');
-        } else {
-          console.error('Firebase 모듈을 찾을 수 없습니다.');
-        }
-      });
-    </script>
-    <script>
-      // 작업 대기 큐 시스템 추가
-      window.pendingOperations = [];
-      window.moduleInitialized = false;
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+  <title>WhatQuizBase</title>
+  <link rel="shortcut icon" href="TemplateData/favicon.ico">
+  <link rel="stylesheet" href="TemplateData/style.css">
+  <link rel="manifest" href="manifest.webmanifest">
+  <style>
+    #unity-footer {
+      position: absolute;
+      bottom: 8px;
+      left: 0;
+      width: 100%;
+      text-align: center;
+      font-size: 12px;
+      color: #666;
+    }
 
-      // Unity 모듈 초기화 상태 확인 함수
-      function checkUnityModuleInitialization() {
-        return typeof Module !== 'undefined' && Module.HEAPU8;
-      }
+    /* 추가 Firebase 관련 스타일 */
+    #unity-progress-bar-empty {
+      width: 100%;
+      height: 100%;
+      background-color: #eee;
+      border-radius: 6px;
+    }
 
-      // 대기 중인 작업 실행 함수
-      function executePendingOperations() {
-        console.log("대기 중인 작업 실행 시도, 작업 수: " + window.pendingOperations.length);
-        if (!checkUnityModuleInitialized()) {
-          console.log("Unity Module이 아직 초기화되지 않았습니다. 대기 작업 실행 지연");
-          setTimeout(executePendingOperations, 500);
-          return;
-        }
+    #unity-progress-bar-full {
+      width: 0%;
+      height: 100%;
+      background-color: #4287f5;
+      border-radius: 6px;
+      transition: width 0.3s ease;
+    }
+  </style>
 
-        window.moduleInitialized = true;
-        console.log("Unity Module 초기화 완료, 대기 작업 실행 시작");
+  <!-- Firebase SDK 추가 -->
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
 
-        // 대기 중인 작업 복사 후 큐 비우기 (실행 중 새 작업 추가 방지)
-        var operations = [...window.pendingOperations];
-        window.pendingOperations = [];
-
-        // 작업 실행
-        for (var i = 0; i < operations.length; i++) {
-          try {
-            console.log("대기 작업 실행 #" + (i+1));
-            operations[i]();
-          } catch (e) {
-            console.error("대기 작업 실행 중 오류:", e);
-          }
-        }
-      }
-
-      // 작업 대기 큐에 추가하는 함수
-      function addPendingOperation(operation) {
-        if (window.moduleInitialized && checkUnityModuleInitialized()) {
-          // 이미 초기화되었으면 바로 실행
-          try {
-            operation();
-          } catch (e) {
-            console.error("작업 실행 중 오류:", e);
-          }
-        } else {
-          // 초기화 전이면 대기 큐에 추가
-          window.pendingOperations.push(operation);
-          console.log("작업이 대기 큐에 추가됨. 현재 대기 작업 수: " + window.pendingOperations.length);
-        }
-      }
-
-      // 전역으로 사용할 수 있게 함수 노출
-      window.addPendingOperation = addPendingOperation;
-    </script>
-  </head>
-  <body>
-    <div id="unity-container">
-      <canvas id="unity-canvas" width=1920 height=1080 tabindex="-1"></canvas>
-      <div id="unity-loading-bar">
-        <div id="unity-logo"></div>
-        <div id="unity-progress-bar-empty">
-          <div id="unity-progress-bar-full"></div>
-        </div>
-      </div>
-      <div id="unity-warning"> </div>
+  <!-- Firebase 설정 및 인증 관련 스크립트 -->
+  <script src="TemplateData/firebase-init.js"></script>
+  <script src="TemplateData/firebase-auth.js"></script>
+  <script src="TemplateData/unity-bridge.js"></script>
+</head>
+<body>
+<div id="unity-container">
+  <canvas id="unity-canvas" width=1920 height=1080 tabindex="-1"></canvas>
+  <div id="unity-loading-bar">
+    <div id="unity-logo"></div>
+    <div id="unity-progress-bar-empty">
+      <div id="unity-progress-bar-full"></div>
     </div>
-    <script>
-      window.addEventListener("load", function () {
-        if ("serviceWorker" in navigator) {
-          navigator.serviceWorker.register("ServiceWorker.js");
-        }
-      });
+  </div>
+  <div id="unity-warning"> </div>
+  <div id="unity-footer">
+    <div>WhatQuiz &copy; 2025</div>
+  </div>
+</div>
+<script>
+  window.addEventListener("load", function () {
+    if ("serviceWorker" in navigator) {
+      navigator.serviceWorker.register("ServiceWorker.js");
+    }
+  });
 
-      var container = document.querySelector("#unity-container");
-      var canvas = document.querySelector("#unity-canvas");
-      var loadingBar = document.querySelector("#unity-loading-bar");
-      var progressBarFull = document.querySelector("#unity-progress-bar-full");
-      var warningBanner = document.querySelector("#unity-warning");
+  var container = document.querySelector("#unity-container");
+  var canvas = document.querySelector("#unity-canvas");
+  var loadingBar = document.querySelector("#unity-loading-bar");
+  var progressBarFull = document.querySelector("#unity-progress-bar-full");
+  var warningBanner = document.querySelector("#unity-warning");
 
-      // Shows a temporary message banner/ribbon for a few seconds, or
-      // a permanent error message on top of the canvas if type=='error'.
-      // If type=='warning', a yellow highlight color is used.
-      // Modify or remove this function to customize the visually presented
-      // way that non-critical warnings and error messages are presented to the
-      // user.
-      function unityShowBanner(msg, type) {
-        function updateBannerVisibility() {
-          warningBanner.style.display = warningBanner.children.length ? 'block' : 'none';
-        }
-        var div = document.createElement('div');
-        div.innerHTML = msg;
-        warningBanner.appendChild(div);
-        if (type == 'error') div.style = 'background: red; padding: 10px;';
-        else {
-          if (type == 'warning') div.style = 'background: yellow; padding: 10px;';
-          setTimeout(function() {
-            warningBanner.removeChild(div);
-            updateBannerVisibility();
-          }, 5000);
-        }
+  // Shows a temporary message banner/ribbon for a few seconds, or
+  // a permanent error message on top of the canvas if type=='error'.
+  // If type=='warning', a yellow highlight color is used.
+  // Modify or remove this function to customize the visually presented
+  // way that non-critical warnings and error messages are presented to the
+  // user.
+  function unityShowBanner(msg, type) {
+    function updateBannerVisibility() {
+      warningBanner.style.display = warningBanner.children.length ? 'block' : 'none';
+    }
+    var div = document.createElement('div');
+    div.innerHTML = msg;
+    warningBanner.appendChild(div);
+    if (type == 'error') div.style = 'background: red; padding: 10px;';
+    else {
+      if (type == 'warning') div.style = 'background: yellow; padding: 10px;';
+      setTimeout(function() {
+        warningBanner.removeChild(div);
         updateBannerVisibility();
+      }, 5000);
+    }
+    updateBannerVisibility();
+  }
+
+  var buildUrl = "Build";
+  var loaderUrl = buildUrl + "/firebasetest.loader.js";
+  var config = {
+    arguments: [],
+    dataUrl: buildUrl + "/firebasetest.data",
+    frameworkUrl: buildUrl + "/firebasetest.framework.js",
+    codeUrl: buildUrl + "/firebasetest.wasm",
+    streamingAssetsUrl: "StreamingAssets",
+    companyName: "DefaultCompany",
+  productName: "WhatQuizBase",
+  productVersion: "1.0",
+  showBanner: unityShowBanner,
+  };
+
+  // By default Unity keeps WebGL canvas render target size matched with
+  // the DOM size of the canvas element (scaled by window.devicePixelRatio)
+  // Set this to false if you want to decouple this synchronization from
+  // happening inside the engine, and you would instead like to size up
+  // the canvas DOM size and WebGL render target sizes yourself.
+  // config.matchWebGLToCanvasSize = false;
+
+  if (/iPhone|iPad|iPod|Android/i.test(navigator.userAgent)) {
+    // Mobile device style: fill the whole browser client area with the game canvas:
+    var meta = document.createElement('meta');
+    meta.name = 'viewport';
+    meta.content = 'width=device-width, height=device-height, initial-scale=1.0, user-scalable=no, shrink-to-fit=yes';
+    document.getElementsByTagName('head')[0].appendChild(meta);
+  }
+
+  loadingBar.style.display = "block";
+
+  var script = document.createElement("script");
+  script.src = loaderUrl;
+  script.onload = () => {
+    createUnityInstance(canvas, config, (progress) => {
+      progressBarFull.style.width = 100 * progress + "%";
+    }).then((unityInstance) => {
+      loadingBar.style.display = "none";
+
+      // Firebase 연동을 위해 Unity 인스턴스 저장
+      window.setUnityInstance(unityInstance);
+
+      // Firebase 초기화 상태 확인
+      if (window.firebaseInitialized) {
+        console.log("Firebase가 이미 초기화되었습니다.");
+        // 사용자 정보 확인 및 전송
+        if (typeof checkAndSendSavedUserInfo === 'function') {
+          checkAndSendSavedUserInfo();
+        }
+      } else {
+        console.log("Firebase 초기화 중...");
+        // Firebase가 아직 초기화되지 않았다면 초기화 시도
+        if (typeof initializeFirebase === 'function') {
+          window.initializeFirebase();
+        }
       }
-
-      var buildUrl = "Build";
-      var loaderUrl = buildUrl + "/firebasetest.loader.js";
-      var config = {
-        arguments: [],
-        dataUrl: buildUrl + "/firebasetest.data",
-        frameworkUrl: buildUrl + "/firebasetest.framework.js",
-        codeUrl: buildUrl + "/firebasetest.wasm",
-        streamingAssetsUrl: "StreamingAssets",
-        companyName: "DefaultCompany",
-        productName: "WhatQuizBase",
-        productVersion: "1.0",
-        showBanner: unityShowBanner,
-      };
-
-      // By default Unity keeps WebGL canvas render target size matched with
-      // the DOM size of the canvas element (scaled by window.devicePixelRatio)
-      // Set this to false if you want to decouple this synchronization from
-      // happening inside the engine, and you would instead like to size up
-      // the canvas DOM size and WebGL render target sizes yourself.
-      // config.matchWebGLToCanvasSize = false;
-
-      if (/iPhone|iPad|iPod|Android/i.test(navigator.userAgent)) {
-        // Mobile device style: fill the whole browser client area with the game canvas:
-        var meta = document.createElement('meta');
-        meta.name = 'viewport';
-        meta.content = 'width=device-width, height=device-height, initial-scale=1.0, user-scalable=no, shrink-to-fit=yes';
-        document.getElementsByTagName('head')[0].appendChild(meta);
-      }
-
-      loadingBar.style.display = "block";
-
-      var script = document.createElement("script");
-      script.src = loaderUrl;
-      script.onload = () => {
-        createUnityInstance(canvas, config, (progress) => {
-          progressBarFull.style.width = 100 * progress + "%";
-        }).then((unityInstance) => {
-          loadingBar.style.display = "none";
-
-          // Unity 인스턴스를 설정하고 Firebase 연동
-          window.unityInstance = unityInstance; // 기본 설정
-          window.unityLoaded = true;
-          console.log('Unity 인스턴스 로드 완료');
-
-          // Unity 모듈 초기화 확인 및 대기 작업 실행
-          window.moduleInitialized = checkUnityModuleInitialization();
-          if (window.moduleInitialized) {
-            console.log("Unity Module이 이미 초기화되어 있음. 대기 작업 즉시 실행");
-            executePendingOperations();
-          } else {
-            console.log("Unity Module 초기화 대기 중...");
-            setTimeout(executePendingOperations, 1000); // 1초 후 실행 시도
-          }
-          
-          if (typeof UnityBridgeModule !== 'undefined') {
-            UnityBridgeModule.setUnityInstance(unityInstance);
-            console.log('Unity Bridge 모듈 설정 완료');
-          } else {
-            console.error("UnityBridgeModule이 로드되지 않았습니다.");
-          }
-          
-          // Firebase 초기화 상태 확인 및 사용자 정보 전송
-          if (typeof FirebaseModule !== 'undefined') {
-            // Firebase가 아직 초기화되지 않았다면 재시도
-            if (!window.firebaseLoaded) {
-              FirebaseModule.initialize();
-              window.firebaseLoaded = true;
-              console.log('Firebase 지연 초기화 성공');
-            }
-            
-            // 저장된 사용자 정보 확인 및 전송
-            FirebaseModule.checkAndSendSavedUserInfo();
-            console.log('사용자 정보 확인 완료');
-          } else {
-            console.error("FirebaseModule이 로드되지 않았습니다.");
-          }
-        }).catch((message) => {
-          alert(message);
-        });
-      };
-      document.body.appendChild(script);
-    </script>
-  </body>
+    }).catch((message) => {
+      alert(message);
+    });
+  };
+  document.body.appendChild(script);
+</script>
+</body>
 </html>
