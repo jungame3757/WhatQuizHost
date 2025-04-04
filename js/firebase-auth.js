@@ -4,15 +4,16 @@
 
 // UTF8ToString 함수 정의
 function UTF8ToString(ptr) {
-    if (typeof UTF8ToString === 'function') {
-        return UTF8ToString(ptr);
-    } else if (typeof Pointer_stringify === 'function') {
-        return Pointer_stringify(ptr);
-    } else {
-        console.error('문자열 변환 함수를 찾을 수 없습니다');
-        return '';
+    if (ptr === 0) return '';
+    
+    let str = '';
+    let idx = ptr;
+    while (HEAPU8[idx] !== 0) {
+      str += String.fromCharCode(HEAPU8[idx++]);
     }
+    return str;
 }
+
 const FirebaseAuthModule = (function() {
     /**
      * 로그인 함수
