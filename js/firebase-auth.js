@@ -1,6 +1,18 @@
-/**
- * Firebase 인증 관련 기능을 관리하는 모듈
- */
+/*
+** Firebase 인증 관련 기능을 관리하는 모듈
+*/
+
+// UTF8ToString 함수 정의
+function UTF8ToString(ptr) {
+    if (typeof UTF8ToString === 'function') {
+        return UTF8ToString(ptr);
+    } else if (typeof Pointer_stringify === 'function') {
+        return Pointer_stringify(ptr);
+    } else {
+        console.error('문자열 변환 함수를 찾을 수 없습니다');
+        return '';
+    }
+}
 const FirebaseAuthModule = (function() {
     /**
      * 로그인 함수
@@ -8,72 +20,73 @@ const FirebaseAuthModule = (function() {
      * @param {string} password - 로그인 비밀번호
      */
     function login(email, password) {
-        // UTF8ToString 함수 안전한 참조
-        const emailStr = typeof UnityBridgeModule !== 'undefined' ? email: 
-            (window.UTF8ToString ? window.UTF8ToString(email) : "");
-        const passwordStr = typeof UnityBridgeModule !== 'undefined' ? password : 
-            (window.UTF8ToString ? window.UTF8ToString(password) : "");
-        
-        console.log("JavaScript: Firebase 로그인 시도 - " + emailStr);
-        
+        console.log("[FirebaseAuthModule.login] 시작");
+        const emailStr = UTF8ToString(email);
+        const passwordStr = UTF8ToString(password);
+
+        console.log("[FirebaseAuthModule.login] Firebase 로그인 시도 - " + emailStr);
+
         firebase.auth().signInWithEmailAndPassword(emailStr, passwordStr)
             .then((userCredential) => {
                 // 로그인 성공
                 const user = userCredential.user;
-                console.log("로그인 성공: " + user.uid);
+                console.log("[FirebaseAuthModule.login] 성공: " + user.uid);
                 // Unity에 추가 정보도 전달
                 window.unityInstance.SendMessage('AuthManager', 'HandleLoginSuccess', user.uid);
-                
+
                 // 사용자 이메일을 UserSessionManager에 전달
                 if (user.email) {
+                    console.log("[FirebaseAuthModule.login] 사용자 이메일 전달: " + user.email);
                     window.unityInstance.SendMessage('UserSessionManager', 'SetUserEmail', user.email);
                 }
+                console.log("[FirebaseAuthModule.login] 완료");
             })
             .catch((error) => {
                 // 로그인 실패
                 const errorCode = error.code;
                 const errorMessage = error.message;
-                console.error("로그인 실패: " + errorMessage);
+                console.error("[FirebaseAuthModule.login] 실패: " + errorMessage + " (" + errorCode + ")");
                 window.unityInstance.SendMessage('AuthManager', 'HandleLoginFailed', errorMessage);
+                console.log("[FirebaseAuthModule.login] 오류 처리 완료");
             });
     }
-    
+
     /**
      * 회원가입 함수
      * @param {string} email - 가입할 이메일 주소
      * @param {string} password - 설정할 비밀번호
      */
     function register(email, password) {
-        // UTF8ToString 함수 안전한 참조
-        const emailStr = typeof UnityBridgeModule !== 'undefined' ? email : 
-            (window.UTF8ToString ? window.UTF8ToString(email) : "");
-        const passwordStr = typeof UnityBridgeModule !== 'undefined' ? password : 
-            (window.UTF8ToString ? window.UTF8ToString(password) : "");
-        
-        console.log("JavaScript: Firebase 회원가입 시도 - " + emailStr);
-        
+        console.log("[FirebaseAuthModule.register] 시작");
+        const emailStr = UTF8ToString(email);
+        const passwordStr = UTF8ToString(password);
+
+        console.log("[FirebaseAuthModule.register] Firebase 회원가입 시도 - " + emailStr);
+
         firebase.auth().createUserWithEmailAndPassword(emailStr, passwordStr)
             .then((userCredential) => {
                 // 회원가입 성공
                 const user = userCredential.user;
-                console.log("회원가입 성공: " + user.uid);
+                console.log("[FirebaseAuthModule.register] 회원가입 성공: " + user.uid);
                 window.unityInstance.SendMessage('AuthManager', 'HandleRegisterSuccess', user.uid);
+                console.log("[FirebaseAuthModule.register] 회원가입 처리 완료");
             })
             .catch((error) => {
                 // 회원가입 실패
                 const errorCode = error.code;
                 const errorMessage = error.message;
-                console.error("회원가입 실패: " + errorMessage);
+                console.error("[FirebaseAuthModule.register] 회원가입 실패: " + errorMessage + " (" + errorCode + ")");
                 window.unityInstance.SendMessage('AuthManager', 'HandleRegisterFailed', errorMessage);
+                console.log("[FirebaseAuthModule.register] 오류 처리 완료");
             });
     }
-    
+
     /**
      * 로그아웃 함수
      */
     function logout() {
         console.log("JavaScript: Firebase 로그아웃 시도");
-        
+
         firebase.auth().signOut()
             .then(() => {
                 // 로그아웃 성공
@@ -84,18 +97,16 @@ const FirebaseAuthModule = (function() {
                 console.error("로그아웃 실패: " + error.message);
             });
     }
-    
+
     /**
      * 비밀번호 재설정 이메일 발송 함수
      * @param {string} email - 비밀번호를 재설정할 이메일 주소
      */
     function resetPassword(email) {
-        // UTF8ToString 함수 안전한 참조
-        const emailStr = typeof UnityBridgeModule !== 'undefined' ? email : 
-            (window.UTF8ToString ? window.UTF8ToString(email) : "");
-        
+        const emailStr = UTF8ToString(email);
+
         console.log("JavaScript: Firebase 비밀번호 재설정 시도 - " + emailStr);
-        
+
         firebase.auth().sendPasswordResetEmail(emailStr)
             .then(() => {
                 // 이메일 발송 성공
@@ -108,7 +119,7 @@ const FirebaseAuthModule = (function() {
                 window.unityInstance.SendMessage('AuthManager', 'HandleResetPasswordFailed', error.message);
             });
     }
-    
+
     /**
      * 현재 인증 상태 확인 함수
      * @returns {number} 인증된 상태이면 1, 아니면 0
@@ -125,7 +136,7 @@ const FirebaseAuthModule = (function() {
     function getCurrentUser() {
         return firebase.auth().currentUser;
     }
-    
+
     // 공개 API
     return {
         login: login,
@@ -139,21 +150,26 @@ const FirebaseAuthModule = (function() {
 
 // Unity에서 호출할 전역 함수들
 function FirebaseLogin(email, password) {
+    console.log("[Global.FirebaseLogin] Firebase 로그인 호출 - 추가 로깅");
     FirebaseAuthModule.login(email, password);
 }
 
 function FirebaseRegister(email, password) {
+    console.log("[Global.FirebaseRegister] Firebase 회원가입 호출 - 추가 로깅");
     FirebaseAuthModule.register(email, password);
 }
 
 function FirebaseLogout() {
+    console.log("[Global.FirebaseLogout] Firebase 로그아웃 호출 - 추가 로깅");
     FirebaseAuthModule.logout();
 }
 
 function FirebaseResetPassword(email) {
+    console.log("[Global.FirebaseResetPassword] Firebase 비밀번호 재설정 호출 - 추가 로깅");
     FirebaseAuthModule.resetPassword(email);
 }
 
 function FirebaseIsAuthenticated() {
+    console.log("[Global.FirebaseIsAuthenticated] Firebase 인증 상태 확인 호출 - 추가 로깅");
     return FirebaseAuthModule.isAuthenticated();
 }

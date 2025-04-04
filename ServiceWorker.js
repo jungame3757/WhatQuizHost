@@ -1,11 +1,10 @@
-const cacheName = "DefaultCompany-WhatQuizBase-1.0";
+const cacheName = "Plactical-WhatQuiz-1.0";
 const contentToCache = [
-    "Build/firebasetest.loader.js",
-    "Build/firebasetest.framework.js",
-    "Build/firebasetest.data",
-    "Build/firebasetest.wasm",
+    "Build/WebGL.loader.js",
+    "Build/WebGL.framework.js",
+    "Build/WebGL.data",
+    "Build/WebGL.wasm",
     "TemplateData/style.css"
-
 ];
 
 self.addEventListener('install', function (e) {
