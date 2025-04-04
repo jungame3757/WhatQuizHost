@@ -3,13 +3,20 @@
 */
 
 // UTF8ToString 함수 정의
+// 또는 Module 전역 객체 활용
 function UTF8ToString(ptr) {
+    if (typeof Module === 'undefined' || !Module.HEAPU8) {
+        console.error('Unity Module이 초기화되지 않았습니다');
+        return '';
+    }
+
+    // 직접 구현할 경우 안전 로직 추가
     if (ptr === 0) return '';
-    
+
     let str = '';
     let idx = ptr;
-    while (HEAPU8[idx] !== 0) {
-      str += String.fromCharCode(HEAPU8[idx++]);
+    while (Module.HEAPU8[idx] !== 0) {
+        str += String.fromCharCode(Module.HEAPU8[idx++]);
     }
     return str;
 }
