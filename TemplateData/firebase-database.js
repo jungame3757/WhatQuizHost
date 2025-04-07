@@ -1,5 +1,64 @@
 // Firebase 데이터베이스 관련 함수들
 (function() {
+    // 트랜잭션을 활용한 중복 확인 및 데이터 저장
+    window.firebaseCheckAndSaveData = function(path, data) {
+        if (!window.firebaseInitialized) {
+            console.error("Firebase가 초기화되지 않았습니다.");
+            return false;
+        }
+
+        try {
+            // JSON 문자열을 객체로 변환
+            const jsonData = JSON.parse(data);
+            const dbRef = firebase.database().ref(path);
+
+            // 트랜잭션 실행 - 데이터가 존재하지 않는 경우에만 저장
+            dbRef.transaction(currentData => {
+                // 이미 데이터가 존재하는 경우
+                if (currentData !== null) {
+                    console.log(`이미 존재하는 세션 ID: ${path}`);
+                    return; // 변경하지 않고 취소 (null을 리턴하지 않음)
+                }
+                
+                // 데이터가 없는 경우, 새 데이터 생성
+                return jsonData;
+            }).then(result => {
+                if (result.committed) {
+                    // 성공적으로 데이터 저장함
+                    console.log(`트랜잭션 성공: ${path}`);
+                    
+                    // Unity에 트랜잭션 성공 및 데이터 저장 완료 알림
+                    if (window.unityInstance) {
+                        window.unityInstance.SendMessage("DatabaseManager", "OnTransactionCompleted", path + ",true");
+                        window.unityInstance.SendMessage("DatabaseManager", "OnDataSaved", path);
+                    }
+                } else {
+                    // 이미 데이터가 존재하여 취소됨
+                    console.log(`트랜잭션 취소 (이미 존재하는 ID): ${path}`);
+                    
+                    // Unity에 트랜잭션 실패 알림
+                    if (window.unityInstance) {
+                        window.unityInstance.SendMessage("DatabaseManager", "OnTransactionCompleted", path + ",false");
+                        window.unityInstance.SendMessage("DatabaseManager", "OnDatabaseError", "이미 존재하는 세션 ID입니다.");
+                    }
+                }
+            }).catch(error => {
+                console.error(`트랜잭션 오류: ${error}`);
+                
+                // Unity에 오류 알림
+                if (window.unityInstance) {
+                    window.unityInstance.SendMessage("DatabaseManager", "OnTransactionCompleted", path + ",false");
+                    window.unityInstance.SendMessage("DatabaseManager", "OnDatabaseError", error.message);
+                }
+            });
+
+            return true;
+        } catch (e) {
+            console.error("트랜잭션 중 오류 발생:", e);
+            return false;
+        }
+    };
+
     // 데이터 저장
     window.firebaseSaveData = function(path, data) {
         if (!window.firebaseInitialized) {

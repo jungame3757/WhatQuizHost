@@ -156,4 +156,39 @@
                 }
             });
     };
+
+    // 다음 함수들을 firebase-auth.js 파일에 추가
+    window.checkAuthState = function() {
+        firebase.auth().onAuthStateChanged(function(user) {
+            if (user) {
+                // 사용자가 로그인된 상태
+                const userData = {
+                    uid: user.uid,
+                    email: user.email,
+                    displayName: user.displayName || user.email.split('@')[0]
+                };
+
+                // Unity에 사용자 정보 전달
+                if (window.unityInstance) {
+                    window.unityInstance.SendMessage("AuthManager", "OnLoginSuccess", JSON.stringify(userData));
+                }
+            }
+        });
+    };
+
+    window.signOut = function() {
+        firebase.auth().signOut()
+            .then(function() {
+                console.log("로그아웃 성공");
+                if (window.unityInstance) {
+                    window.unityInstance.SendMessage("AuthManager", "OnSignOutSuccess");
+                }
+            })
+            .catch(function(error) {
+                console.error("로그아웃 오류:", error);
+                if (window.unityInstance) {
+                    window.unityInstance.SendMessage("AuthManager", "OnAuthError", "로그아웃 중 오류가 발생했습니다.");
+                }
+            });
+    };
 })();
