@@ -52,7 +52,7 @@
 
                     // Unity에 로그인 정보 전송 (Unity 인스턴스가 준비된 경우)
                     if (window.unityInstance) {
-                        window.unityInstance.SendMessage("AuthManager", "OnLoginSuccess", window.currentUser.displayName);
+                        window.unityInstance.SendMessage("AuthManager", "OnLoginSuccess", JSON.stringify(window.currentUser));
                     }
                 } else {
                     // 사용자가 로그아웃한 경우
@@ -72,7 +72,7 @@
     function checkAndSendSavedUserInfo() {
         if (window.currentUser && window.unityInstance) {
             console.log("저장된 사용자 정보를 Unity로 전송:", window.currentUser.displayName);
-            window.unityInstance.SendMessage("AuthManager", "OnLoginSuccess", window.currentUser.displayName);
+            window.unityInstance.SendMessage("AuthManager", "OnLoginSuccess", JSON.stringify(window.currentUser));
         }
     }
 

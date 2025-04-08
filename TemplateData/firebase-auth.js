@@ -28,10 +28,14 @@
                 const user = userCredential.user;
                 console.log("로그인 성공:", user.email);
 
-                // Unity에 로그인 성공 알림
-                const displayName = user.displayName || user.email.split('@')[0];
+                // Unity에 로그인 성공 알림 - JSON 객체로 변경
+                const userData = {
+                    uid: user.uid,
+                    email: user.email,
+                    displayName: user.displayName || user.email.split('@')[0]
+                };
                 if (window.unityInstance) {
-                    window.unityInstance.SendMessage("AuthManager", "OnLoginSuccess", displayName);
+                    window.unityInstance.SendMessage("AuthManager", "OnLoginSuccess", JSON.stringify(userData));
                 }
             })
             .catch((error) => {
