@@ -19,6 +19,10 @@ window.firebaseCheckAndSaveData = function(path, data) {
                 
                 // Unity에 트랜잭션 실패 알림
                 if (window.unityInstance) {
+                    // 이전 방식: window.unityInstance.SendMessage("DatabaseManager", "OnTransactionCompleted", path + ",false");
+                    // 새로운 방식: 파라미터를 문자열 하나로 전달
+                    // 이전 방식: window.unityInstance.SendMessage("DatabaseManager", "OnTransactionCompleted", path + ",false");
+                    // 새로운 방식: 파라미터를 문자열 하나로 전달
                     window.unityInstance.SendMessage("DatabaseManager", "OnTransactionCompleted", path + ",false");
                     window.unityInstance.SendMessage("DatabaseManager", "OnDatabaseError", "이미 존재하는 세션 ID입니다.");
                 }
@@ -43,7 +47,9 @@ window.firebaseCheckAndSaveData = function(path, data) {
                     
                     // Unity에 트랜잭션 성공 및 데이터 저장 완료 알림
                     if (window.unityInstance) {
-                        window.unityInstance.SendMessage("DatabaseManager", "OnTransactionCompleted", path + ",true");
+                        // 이전 방식: window.unityInstance.SendMessage("DatabaseManager", "OnTransactionCompleted", path + ",true");
+                    // 새로운 방식: 파라미터를 문자열 하나로 전달 - C#에서는 이 문자열을 분석하여 사용
+                    window.unityInstance.SendMessage("DatabaseManager", "OnTransactionCompleted", path + ",true");
                         window.unityInstance.SendMessage("DatabaseManager", "OnDataSaved", path);
                     }
                 } else {
@@ -61,8 +67,8 @@ window.firebaseCheckAndSaveData = function(path, data) {
                 
                 // Unity에 오류 알림
                 if (window.unityInstance) {
-                    window.unityInstance.SendMessage("DatabaseManager", "OnTransactionCompleted", path + ",false");
-                    window.unityInstance.SendMessage("DatabaseManager", "OnDatabaseError", error.message);
+                window.unityInstance.SendMessage("DatabaseManager", "OnTransactionCompleted", path + ",false");
+                window.unityInstance.SendMessage("DatabaseManager", "OnDatabaseError", error.message);
                 }
             });
         });
