@@ -21,7 +21,8 @@
                         
                         // Unity에 트랜잭션 실패 알림
                         if (window.unityInstance) {
-                            window.unityInstance.SendMessage("DatabaseManager", "OnTransactionCompleted", path + ",false");
+                            window.unityInstance.SendMessage("DatabaseManager", "OnTransactionCompleted", path);
+            window.unityInstance.SendMessage("DatabaseManager", "OnTransactionResult", "false");
                             window.unityInstance.SendMessage("DatabaseManager", "OnDatabaseError", "이미 존재하는 세션 ID입니다.");
                         }
                         return Promise.reject("이미 존재하는 세션 ID");
@@ -36,7 +37,8 @@
                     
                     // Unity에 트랜잭션 성공 및 데이터 저장 완료 알림
                     if (window.unityInstance) {
-                        window.unityInstance.SendMessage("DatabaseManager", "OnTransactionCompleted", path + ",true");
+                        window.unityInstance.SendMessage("DatabaseManager", "OnTransactionCompleted", path);
+                        window.unityInstance.SendMessage("DatabaseManager", "OnTransactionResult", "true");
                         window.unityInstance.SendMessage("DatabaseManager", "OnDataSaved", path);
                     }
                 })
@@ -50,7 +52,8 @@
                     
                     // Unity에 오류 알림
                     if (window.unityInstance) {
-                        window.unityInstance.SendMessage("DatabaseManager", "OnTransactionCompleted", path + ",false");
+                        window.unityInstance.SendMessage("DatabaseManager", "OnTransactionCompleted", path);
+                        window.unityInstance.SendMessage("DatabaseManager", "OnTransactionResult", "false");
                         window.unityInstance.SendMessage("DatabaseManager", "OnDatabaseError", error.message || error);
                     }
                 });
@@ -61,7 +64,8 @@
             
             // Unity에 오류 알림
             if (window.unityInstance) {
-                window.unityInstance.SendMessage("DatabaseManager", "OnTransactionCompleted", path + ",false");
+                window.unityInstance.SendMessage("DatabaseManager", "OnTransactionCompleted", path);
+                window.unityInstance.SendMessage("DatabaseManager", "OnTransactionResult", "false");
                 window.unityInstance.SendMessage("DatabaseManager", "OnDatabaseError", e.message || "JSON 파싱 오류");
             }
             
