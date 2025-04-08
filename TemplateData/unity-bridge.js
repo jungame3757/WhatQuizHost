@@ -5,6 +5,14 @@
         window.unityInstance = unityInstance;
         console.log("Unity 인스턴스 설정됨");
         
+        // Firebase 함수 디버깅 - 함수 존재 여부 확인
+        console.log("Firebase 함수 확인:", {
+            firebaseCheckAndSaveData: typeof window.firebaseCheckAndSaveData === 'function',
+            firebaseSaveData: typeof window.firebaseSaveData === 'function',
+            firebaseLoadData: typeof window.firebaseLoadData === 'function',
+            firebaseInitialized: window.firebaseInitialized
+        });
+        
         // 이벤트 발생
         var event = new Event('unityInstanceReady');
         window.dispatchEvent(event);

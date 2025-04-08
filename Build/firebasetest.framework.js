@@ -1652,7 +1652,44 @@ var ASM_CONSTS = {
           var path = UTF8ToString(pathPtr);
           var data = UTF8ToString(dataPtr);
           
-          return window.firebaseCheckAndSaveData(path, data);
+          if (typeof window.firebaseCheckAndSaveData === 'function') {
+              return window.firebaseCheckAndSaveData(path, data);
+          } else {
+              // 함수가 없는 경우 대체 실행 코드 추가
+              console.error("firebaseCheckAndSaveData 함수가 정의되지 않았습니다. 기본 저장 방식으로 대체합니다.");
+              
+              try {
+                  // 함수가 없는 경우, 기본 파이어베이스 저장 방식 사용
+                  if (typeof window.firebaseSaveData === 'function') {
+                      window.firebaseSaveData(path, data);
+                      
+                      // Unity에 트랜잭션 성공 메시지 전달
+                      if (window.unityInstance) {
+                          window.unityInstance.SendMessage("DatabaseManager", "OnTransactionCompleted", path + ",true");
+                          window.unityInstance.SendMessage("DatabaseManager", "OnDataSaved", path);
+                      }
+                      return true;
+                  } else {
+                      console.error("firebase 저장 기능이 없습니다.");
+                      
+                      // Unity에 오류 메시지 전달
+                      if (window.unityInstance) {
+                          window.unityInstance.SendMessage("DatabaseManager", "OnTransactionCompleted", path + ",false");
+                          window.unityInstance.SendMessage("DatabaseManager", "OnDatabaseError", "Firebase 저장 기능을 찾을 수 없습니다.");
+                      }
+                      return false;
+                  }
+              } catch (e) {
+                  console.error("데이터 저장 중 오류 발생:", e);
+                  
+                  // Unity에 오류 메시지 전달
+                  if (window.unityInstance) {
+                      window.unityInstance.SendMessage("DatabaseManager", "OnTransactionCompleted", path + ",false");
+                      window.unityInstance.SendMessage("DatabaseManager", "OnDatabaseError", e.message);
+                  }
+                  return false;
+              }
+          }
       }
 
   function _CheckAuthState() {
@@ -7690,26 +7727,46 @@ var ASM_CONSTS = {
   function _LoadData(pathPtr) {
           var path = UTF8ToString(pathPtr);
           
-          return window.firebaseLoadData(path);
+          if (typeof window.firebaseLoadData === 'function') {
+              return window.firebaseLoadData(path);
+          } else {
+              console.error("firebaseLoadData 함수가 정의되지 않았습니다.");
+              return false;
+          }
       }
 
   function _RemoveData(pathPtr) {
           var path = UTF8ToString(pathPtr);
           
-          return window.firebaseRemoveData(path);
+          if (typeof window.firebaseRemoveData === 'function') {
+              return window.firebaseRemoveData(path);
+          } else {
+              console.error("firebaseRemoveData 함수가 정의되지 않았습니다.");
+              return false;
+          }
       }
 
   function _RemoveDataListener(pathPtr) {
           var path = UTF8ToString(pathPtr);
           
-          return window.firebaseRemoveDataListener(path);
+          if (typeof window.firebaseRemoveDataListener === 'function') {
+              return window.firebaseRemoveDataListener(path);
+          } else {
+              console.error("firebaseRemoveDataListener 함수가 정의되지 않았습니다.");
+              return false;
+          }
       }
 
   function _SaveData(pathPtr, dataPtr) {
           var path = UTF8ToString(pathPtr);
           var data = UTF8ToString(dataPtr);
           
-          return window.firebaseSaveData(path, data);
+          if (typeof window.firebaseSaveData === 'function') {
+              return window.firebaseSaveData(path, data);
+          } else {
+              console.error("firebaseSaveData 함수가 정의되지 않았습니다.");
+              return false;
+          }
       }
 
   function _SendPasswordResetEmail(emailPtr) {
@@ -7729,7 +7786,12 @@ var ASM_CONSTS = {
   function _SetupDataListener(pathPtr) {
           var path = UTF8ToString(pathPtr);
           
-          return window.firebaseSetupDataListener(path);
+          if (typeof window.firebaseSetupDataListener === 'function') {
+              return window.firebaseSetupDataListener(path);
+          } else {
+              console.error("firebaseSetupDataListener 함수가 정의되지 않았습니다.");
+              return false;
+          }
       }
 
   function _SignInWithEmail(emailPtr, passwordPtr) {

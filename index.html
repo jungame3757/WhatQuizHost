@@ -147,14 +147,20 @@
       if (window.firebaseInitialized) {
         console.log("Firebase가 이미 초기화되었습니다.");
         // 사용자 정보 확인 및 전송
-        if (typeof checkAndSendSavedUserInfo === 'function') {
-          checkAndSendSavedUserInfo();
+        if (typeof window.checkAndSendSavedUserInfo === 'function') {
+          window.checkAndSendSavedUserInfo();
         }
       } else {
         console.log("Firebase 초기화 중...");
         // Firebase가 아직 초기화되지 않았다면 초기화 시도
-        if (typeof initializeFirebase === 'function') {
+        if (typeof window.initializeFirebase === 'function') {
           window.initializeFirebase();
+          
+          // 함수 존재 여부 확인
+          console.log("Firebase 함수 최종 확인:", {
+            firebaseCheckAndSaveData: typeof window.firebaseCheckAndSaveData === 'function',
+            firebaseSaveData: typeof window.firebaseSaveData === 'function'
+          });
         }
       }
     }).catch((message) => {
