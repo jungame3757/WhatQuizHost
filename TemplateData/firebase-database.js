@@ -35,7 +35,8 @@
                     
                     // 데이터가 없는 경우, 새 데이터 생성
                     return jsonData;
-                }).then(result => {
+                })
+                .then(result => {
                 if (result.committed) {
                     // 성공적으로 데이터 저장함
                     console.log(`트랜잭션 성공: ${path}`);

@@ -1,5 +1,14 @@
 // Unity와 웹 브라우저 간의 통신을 관리하는 브릿지
 (function() {
+    // Unity 인스턴스 설정 함수
+    window.setUnityInstance = function(unityInstance) {
+        window.unityInstance = unityInstance;
+        console.log("Unity 인스턴스 설정됨");
+        
+        // 이벤트 발생
+        var event = new Event('unityInstanceReady');
+        window.dispatchEvent(event);
+    };
     // Unity 로더 설정
     var buildUrl = "Build";
     var loaderUrl = buildUrl + "/{WEBGL_LOADER_FILE_NAME}";
