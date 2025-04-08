@@ -12,63 +12,62 @@
             const jsonData = JSON.parse(data);
             const dbRef = firebase.database().ref(path);
             
-            // 단순화된 코드: 먼저 데이터 존재 확인 후 없으면 설정
-            dbRef.once('value')
-                .then((snapshot) => {
-                    if (snapshot.exists()) {
-                        // 이미 데이터가 존재하면 실패 처리
-                        console.log(`이미 존재하는 세션 ID: ${path}`);
-                        
-                        // Unity에 트랜잭션 실패 알림
-                        if (window.unityInstance) {
-                            window.unityInstance.SendMessage("DatabaseManager", "OnTransactionCompleted", path);
-            window.unityInstance.SendMessage("DatabaseManager", "OnTransactionResult", "false");
-                            window.unityInstance.SendMessage("DatabaseManager", "OnDatabaseError", "이미 존재하는 세션 ID입니다.");
-                        }
-                        return Promise.reject("이미 존재하는 세션 ID");
-                    } 
+            // 먼저 데이터 존재 여부 확인 (중복 검사)
+            dbRef.once('value').then(snapshot => {
+                if (snapshot.exists()) {
+                    console.log(`이미 존재하는 세션 ID: ${path}`);
                     
-                    // 데이터가 없으면 저장 진행
-                    return dbRef.set(jsonData);
-                })
-                .then(() => {
-                    // 저장 성공
-                    console.log(`세션 생성 성공: ${path}`);
+                    // Unity에 트랜잭션 실패 알림
+                    if (window.unityInstance) {
+                        window.unityInstance.SendMessage("DatabaseManager", "OnTransactionCompleted", path + ",false");
+                        window.unityInstance.SendMessage("DatabaseManager", "OnDatabaseError", "이미 존재하는 세션 ID입니다.");
+                    }
+                    return;
+                }
+                
+                // 트랜잭션 실행 - 데이터가 존재하지 않는 경우에만 저장
+                dbRef.transaction(currentData => {
+                    // 이미 데이터가 존재하는 경우
+                    if (currentData !== null) {
+                        console.log(`트랜잭션 중 세션 ID 충돌 발생: ${path}`);
+                        return; // 변경하지 않고 취소 (null을 리턴하지 않음)
+                    }
+                    
+                    // 데이터가 없는 경우, 새 데이터 생성
+                    return jsonData;
+                }).then(result => {
+                if (result.committed) {
+                    // 성공적으로 데이터 저장함
+                    console.log(`트랜잭션 성공: ${path}`);
                     
                     // Unity에 트랜잭션 성공 및 데이터 저장 완료 알림
                     if (window.unityInstance) {
-                        window.unityInstance.SendMessage("DatabaseManager", "OnTransactionCompleted", path);
-                        window.unityInstance.SendMessage("DatabaseManager", "OnTransactionResult", "true");
+                        window.unityInstance.SendMessage("DatabaseManager", "OnTransactionCompleted", path + ",true");
                         window.unityInstance.SendMessage("DatabaseManager", "OnDataSaved", path);
                     }
-                })
-                .catch((error) => {
-                    // 이미 처리된 "이미 존재하는 세션 ID" 에러는 무시
-                    if (error === "이미 존재하는 세션 ID") {
-                        return;
-                    }
+                } else {
+                    // 이미 데이터가 존재하여 취소됨
+                    console.log(`트랜잭션 취소 (이미 존재하는 ID): ${path}`);
                     
-                    console.error(`세션 생성 오류: ${error}`);
-                    
-                    // Unity에 오류 알림
+                    // Unity에 트랜잭션 실패 알림
                     if (window.unityInstance) {
-                        window.unityInstance.SendMessage("DatabaseManager", "OnTransactionCompleted", path);
-                        window.unityInstance.SendMessage("DatabaseManager", "OnTransactionResult", "false");
-                        window.unityInstance.SendMessage("DatabaseManager", "OnDatabaseError", error.message || error);
+                        window.unityInstance.SendMessage("DatabaseManager", "OnTransactionCompleted", path + ",false");
+                        window.unityInstance.SendMessage("DatabaseManager", "OnDatabaseError", "이미 존재하는 세션 ID입니다.");
                     }
-                });
+                }
+            }).catch(error => {
+                console.error(`트랜잭션 오류: ${error}`);
+                
+                // Unity에 오류 알림
+                if (window.unityInstance) {
+                    window.unityInstance.SendMessage("DatabaseManager", "OnTransactionCompleted", path + ",false");
+                    window.unityInstance.SendMessage("DatabaseManager", "OnDatabaseError", error.message);
+                }
+            });
 
             return true;
         } catch (e) {
             console.error("트랜잭션 중 오류 발생:", e);
-            
-            // Unity에 오류 알림
-            if (window.unityInstance) {
-                window.unityInstance.SendMessage("DatabaseManager", "OnTransactionCompleted", path);
-                window.unityInstance.SendMessage("DatabaseManager", "OnTransactionResult", "false");
-                window.unityInstance.SendMessage("DatabaseManager", "OnDatabaseError", e.message || "JSON 파싱 오류");
-            }
-            
             return false;
         }
     };
@@ -233,9 +232,4 @@
             return false;
         }
     };
-
-    // 디버깅용: 함수가 등록되었는지 확인
-    console.log("Firebase 데이터베이스 함수 등록 완료:", 
-                "firebaseCheckAndSaveData:", typeof window.firebaseCheckAndSaveData === "function",
-                "firebaseSaveData:", typeof window.firebaseSaveData === "function");
 })();
