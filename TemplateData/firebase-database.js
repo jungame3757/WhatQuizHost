@@ -11,18 +11,31 @@
             // JSON 문자열을 객체로 변환
             const jsonData = JSON.parse(data);
             const dbRef = firebase.database().ref(path);
-
-            // 트랜잭션 실행 - 데이터가 존재하지 않는 경우에만 저장
-            dbRef.transaction(currentData => {
-                // 이미 데이터가 존재하는 경우
-                if (currentData !== null) {
+            
+            // 먼저 데이터 존재 여부 확인 (중복 검사)
+            dbRef.once('value').then(snapshot => {
+                if (snapshot.exists()) {
                     console.log(`이미 존재하는 세션 ID: ${path}`);
-                    return; // 변경하지 않고 취소 (null을 리턴하지 않음)
+                    
+                    // Unity에 트랜잭션 실패 알림
+                    if (window.unityInstance) {
+                        window.unityInstance.SendMessage("DatabaseManager", "OnTransactionCompleted", path + ",false");
+                        window.unityInstance.SendMessage("DatabaseManager", "OnDatabaseError", "이미 존재하는 세션 ID입니다.");
+                    }
+                    return;
                 }
                 
-                // 데이터가 없는 경우, 새 데이터 생성
-                return jsonData;
-            }).then(result => {
+                // 트랜잭션 실행 - 데이터가 존재하지 않는 경우에만 저장
+                dbRef.transaction(currentData => {
+                    // 이미 데이터가 존재하는 경우
+                    if (currentData !== null) {
+                        console.log(`트랜잭션 중 세션 ID 충돌 발생: ${path}`);
+                        return; // 변경하지 않고 취소 (null을 리턴하지 않음)
+                    }
+                    
+                    // 데이터가 없는 경우, 새 데이터 생성
+                    return jsonData;
+                }).then(result => {
                 if (result.committed) {
                     // 성공적으로 데이터 저장함
                     console.log(`트랜잭션 성공: ${path}`);

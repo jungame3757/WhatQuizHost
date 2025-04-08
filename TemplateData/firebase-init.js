@@ -28,6 +28,7 @@
                 apiKey: "AIzaSyCZrKm6PAuNBGvJDCtXs6ldtRSkw4FTNHM",
                 authDomain: "quiztest-8600d.firebaseapp.com",
                 projectId: "quiztest-8600d",
+                databaseURL: "https://quiztest-8600d-default-rtdb.asia-southeast1.firebasedatabase.app",
                 storageBucket: "quiztest-8600d.firebasestorage.app",
                 messagingSenderId: "1001508556525",
                 appId: "1:1001508556525:web:24c5dbc5ec30ba1876c6e4"
