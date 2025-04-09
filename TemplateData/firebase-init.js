@@ -73,9 +73,18 @@ window.initializeFirebase = function() {
 
 // Unity 인스턴스가 준비되었을 때 저장된 사용자 정보 확인 및 전송
 window.checkAndSendSavedUserInfo = function() {
-    if (window.currentUser && window.unityInstance) {
-        console.log("저장된 사용자 정보를 Unity로 전송:", window.currentUser.displayName);
-        window.unityInstance.SendMessage("AuthManager", "OnLoginSuccess", JSON.stringify(window.currentUser));
+    try {
+        if (window.currentUser && window.unityInstance) {
+            console.log("저장된 사용자 정보를 Unity로 전송:", window.currentUser.displayName || 'Anonymous');
+            window.unityInstance.SendMessage("AuthManager", "OnLoginSuccess", JSON.stringify(window.currentUser));
+        } else {
+            console.log("사용자 정보 또는 Unity 인스턴스가 없습니다: ", { 
+                userExists: !!window.currentUser, 
+                unityExists: !!window.unityInstance 
+            });
+        }
+    } catch (error) {
+        console.error("사용자 정보 전송 중 오류 발생:", error);
     }
 };
 

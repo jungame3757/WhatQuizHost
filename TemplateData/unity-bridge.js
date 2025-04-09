@@ -11,20 +11,48 @@
     
     // Unity 인스턴스 설정 함수
     window.setUnityInstance = function(unityInstance) {
-        window.unityInstance = unityInstance;
-        console.log("Unity 인스턴스 설정됨");
-        
-        // Firebase 함수 디버깅 - 함수 존재 여부 확인
-        console.log("Firebase 함수 확인:", {
-            firebaseCheckAndSaveData: typeof window.firebaseCheckAndSaveData === 'function',
-            firebaseSaveData: typeof window.firebaseSaveData === 'function',
-            firebaseLoadData: typeof window.firebaseLoadData === 'function',
-            firebaseInitialized: window.firebaseInitialized
-        });
-        
-        // 이벤트 발생
-        var event = new Event('unityInstanceReady');
-        window.dispatchEvent(event);
+        try {
+            window.unityInstance = unityInstance;
+            console.log("Unity 인스턴스 설정됨");
+            
+            // Firebase 함수 디버깅 - 함수 존재 여부 확인
+            console.log("Firebase 함수 확인:", {
+                firebaseCheckAndSaveData: typeof window.firebaseCheckAndSaveData === 'function',
+                firebaseSaveData: typeof window.firebaseSaveData === 'function',
+                firebaseLoadData: typeof window.firebaseLoadData === 'function',
+                firebaseInitialized: window.firebaseInitialized
+            });
+            
+            // Firebase 초기화 확인 및 재시도
+            if (!window.firebaseInitialized && typeof window.initializeFirebase === 'function') {
+                console.log("Unity 인스턴스 설정 후 Firebase 초기화 재시도");
+                window.initializeFirebase();
+            }
+            
+            // Firebase가 초기화되었으면 저장된 사용자 정보 전송
+            setTimeout(function() {
+                if (window.firebaseInitialized && typeof window.checkAndSendSavedUserInfo === 'function') {
+                    window.checkAndSendSavedUserInfo();
+                }
+                
+                // URL 파라미터 처리
+                if (typeof window.processPendingURLParameter === 'function') {
+                    window.processPendingURLParameter();
+                }
+            }, 1000);
+            
+            // 이벤트 발생
+            try {
+                var event = new Event('unityInstanceReady');
+                window.dispatchEvent(event);
+            } catch (eventError) {
+                console.warn("이벤트 디스패치 오류:", eventError);
+            }
+        } catch (error) {
+            console.error("Unity 인스턴스 설정 중 오류 발생:", error);
+            // 오류가 발생해도 인스턴스는 저장
+            window.unityInstance = unityInstance;
+        }
     };
     // Unity 로더 설정
     var buildUrl = "Build";

@@ -251,6 +251,16 @@ window.UpdatePlayers = function(sessionId, playersJsonOrId, playerName) {
                             console.log(`플레이어 데이터 업데이트 성공: ${path} (${playersData.players.length}명)`);
                             if (window.unityInstance) {
                                 window.unityInstance.SendMessage("DatabaseManager", "OnDataSaved", path);
+                                
+                                // 데이터 변경 이벤트 강제 발생
+                                const sessionRef = firebase.database().ref(path.substring(0, path.lastIndexOf("/")));
+                                sessionRef.once('value').then(snapshot => {
+                                    const updatedData = snapshot.val();
+                                    if (updatedData) {
+                                        window.unityInstance.SendMessage("DatabaseManager", "OnDataChanged", JSON.stringify(updatedData));
+                                        console.log("전체 플레이어 업데이트 후 데이터 변경 이벤트 강제 발생");
+                                    }
+                                });
                             }
                         })
                         .catch(error => {
@@ -304,7 +314,18 @@ window.UpdatePlayers = function(sessionId, playersJsonOrId, playerName) {
                     }
                     
                     // players 배열 업데이트
-                    return playersRef.set(players);
+                    return playersRef.set(players).then(() => {
+                        // 데이터 변경 이벤트 강제 발생
+                        const sessionRef = firebase.database().ref(path);
+                        sessionRef.once('value').then(snapshot => {
+                            const updatedData = snapshot.val();
+                            if (updatedData && window.unityInstance) {
+                                // 데이터 변경 이벤트를 강제로 호출
+                                window.unityInstance.SendMessage("DatabaseManager", "OnDataChanged", JSON.stringify(updatedData));
+                                console.log("플레이어 업데이트 후 데이터 변경 이벤트 강제 발생");
+                            }
+                        });
+                    });
                 })
                 .then(() => {
                     console.log(`플레이어 추가/수정 성공: ${playerId}`);
