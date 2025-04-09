@@ -12,65 +12,45 @@ window.firebaseCheckAndSaveData = function(path, data) {
         const jsonData = JSON.parse(data);
         const dbRef = firebase.database().ref(path);
         
-        // 먼저 데이터 존재 여부 확인 (중복 검사)
-        dbRef.once('value').then(snapshot => {
-            if (snapshot.exists()) {
-                console.log(`이미 존재하는 세션 ID: ${path}`);
+        // 트랜잭션만 사용하여 중복 확인 및 데이터 저장 (중복 검사 제거)
+        dbRef.transaction(currentData => {
+            // 이미 데이터가 존재하는 경우
+            if (currentData !== null) {
+                console.log(`트랜잭션 중 세션 ID 충돌 발생: ${path}`);
+                return; // 변경하지 않고 취소 (null을 리턴하지 않음)
+            }
+            
+            // 데이터가 없는 경우, 새 데이터 생성
+            return jsonData;
+        })
+        .then(result => {
+            if (result.committed) {
+                // 성공적으로 데이터 저장함
+                console.log(`트랜잭션 성공: ${path}`);
+                
+                // Unity에 트랜잭션 성공 및 데이터 저장 완료 알림
+                if (window.unityInstance) {
+                    window.unityInstance.SendMessage("DatabaseManager", "OnTransactionCompleted", path + ",true");
+                    window.unityInstance.SendMessage("DatabaseManager", "OnDataSaved", path);
+                }
+            } else {
+                // 이미 데이터가 존재하여 취소됨
+                console.log(`트랜잭션 취소 (이미 존재하는 ID): ${path}`);
                 
                 // Unity에 트랜잭션 실패 알림
                 if (window.unityInstance) {
-                    // 이전 방식: window.unityInstance.SendMessage("DatabaseManager", "OnTransactionCompleted", path + ",false");
-                    // 새로운 방식: 파라미터를 문자열 하나로 전달
-                    // 이전 방식: window.unityInstance.SendMessage("DatabaseManager", "OnTransactionCompleted", path + ",false");
-                    // 새로운 방식: 파라미터를 문자열 하나로 전달
                     window.unityInstance.SendMessage("DatabaseManager", "OnTransactionCompleted", path + ",false");
                     window.unityInstance.SendMessage("DatabaseManager", "OnDatabaseError", "이미 존재하는 세션 ID입니다.");
                 }
-                return;
             }
+        }).catch(error => {
+            console.error(`트랜잭션 오류: ${error}`);
             
-            // 트랜잭션 실행 - 데이터가 존재하지 않는 경우에만 저장
-            dbRef.transaction(currentData => {
-                // 이미 데이터가 존재하는 경우
-                if (currentData !== null) {
-                    console.log(`트랜잭션 중 세션 ID 충돌 발생: ${path}`);
-                    return; // 변경하지 않고 취소 (null을 리턴하지 않음)
-                }
-                
-                // 데이터가 없는 경우, 새 데이터 생성
-                return jsonData;
-            })
-            .then(result => {
-                if (result.committed) {
-                    // 성공적으로 데이터 저장함
-                    console.log(`트랜잭션 성공: ${path}`);
-                    
-                    // Unity에 트랜잭션 성공 및 데이터 저장 완료 알림
-                    if (window.unityInstance) {
-                        // 이전 방식: window.unityInstance.SendMessage("DatabaseManager", "OnTransactionCompleted", path + ",true");
-                    // 새로운 방식: 파라미터를 문자열 하나로 전달 - C#에서는 이 문자열을 분석하여 사용
-                    window.unityInstance.SendMessage("DatabaseManager", "OnTransactionCompleted", path + ",true");
-                        window.unityInstance.SendMessage("DatabaseManager", "OnDataSaved", path);
-                    }
-                } else {
-                    // 이미 데이터가 존재하여 취소됨
-                    console.log(`트랜잭션 취소 (이미 존재하는 ID): ${path}`);
-                    
-                    // Unity에 트랜잭션 실패 알림
-                    if (window.unityInstance) {
-                        window.unityInstance.SendMessage("DatabaseManager", "OnTransactionCompleted", path + ",false");
-                        window.unityInstance.SendMessage("DatabaseManager", "OnDatabaseError", "이미 존재하는 세션 ID입니다.");
-                    }
-                }
-            }).catch(error => {
-                console.error(`트랜잭션 오류: ${error}`);
-                
-                // Unity에 오류 알림
-                if (window.unityInstance) {
+            // Unity에 오류 알림
+            if (window.unityInstance) {
                 window.unityInstance.SendMessage("DatabaseManager", "OnTransactionCompleted", path + ",false");
                 window.unityInstance.SendMessage("DatabaseManager", "OnDatabaseError", error.message);
-                }
-            });
+            }
         });
 
         return true;
