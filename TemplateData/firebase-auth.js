@@ -195,4 +195,44 @@
                 }
             });
     };
+    
+    // 익명 로그인 함수
+    window.firebaseSignInAnonymously = function() {
+        if (!window.firebaseInitialized) {
+            console.error("Firebase가 초기화되지 않았습니다.");
+            if (window.unityInstance) {
+                window.unityInstance.SendMessage("AuthManager", "OnAuthError", "Firebase가 초기화되지 않았습니다.");
+            }
+            return;
+        }
+
+        firebase.auth().signInAnonymously()
+            .then((userCredential) => {
+                // 익명 로그인 성공
+                const user = userCredential.user;
+                console.log("익명 로그인 성공:", user.uid);
+
+                // Unity에 로그인 성공 알림 - JSON 객체로 변경
+                const userData = {
+                    uid: user.uid,
+                    email: 'anonymous@user.com', // 익명 사용자에게는 기본 이메일 제공
+                    displayName: '익명 사용자' // 익명 사용자의 기본 표시명
+                };
+                if (window.unityInstance) {
+                    window.unityInstance.SendMessage("AuthManager", "OnLoginSuccess", JSON.stringify(userData));
+                }
+            })
+            .catch((error) => {
+                // 로그인 실패
+                console.error("익명 로그인 오류:", error.code, error.message);
+
+                const errorMessage = errorMessages[error.code] || error.message;
+                console.log("사용자에게 표시할 오류:", errorMessage);
+
+                // Unity에 오류 알림
+                if (window.unityInstance) {
+                    window.unityInstance.SendMessage("AuthManager", "OnAuthError", errorMessage);
+                }
+            });
+    };
 })();

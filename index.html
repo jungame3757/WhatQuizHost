@@ -46,6 +46,7 @@
   <script src="TemplateData/firebase-database.js"></script>
   <script src="TemplateData/firebase-session.js"></script>
   <script src="TemplateData/unity-bridge.js"></script>
+  <script src="TemplateData/url-handler.js"></script>
 
   <!-- QR 코드 라이브러리 추가 -->
   <script src="https://cdn.rawgit.com/davidshimjs/qrcodejs/gh-pages/qrcode.min.js"></script>
@@ -149,6 +150,10 @@
         // 사용자 정보 확인 및 전송
         if (typeof window.checkAndSendSavedUserInfo === 'function') {
           window.checkAndSendSavedUserInfo();
+        }
+        // 저장된 URL 파라미터 처리
+        if (typeof window.processPendingURLParameter === 'function') {
+          window.processPendingURLParameter();
         }
       } else {
         console.log("Firebase 초기화 중...");

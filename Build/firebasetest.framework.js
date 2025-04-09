@@ -1287,10 +1287,10 @@ function dbg(text) {
 // === Body ===
 
 var ASM_CONSTS = {
-  7562416: () => { Module['emscripten_get_now_backup'] = performance.now; },  
- 7562471: ($0) => { performance.now = function() { return $0; }; },  
- 7562519: ($0) => { performance.now = function() { return $0; }; },  
- 7562567: () => { performance.now = Module['emscripten_get_now_backup']; }
+  7564288: () => { Module['emscripten_get_now_backup'] = performance.now; },  
+ 7564343: ($0) => { performance.now = function() { return $0; }; },  
+ 7564391: ($0) => { performance.now = function() { return $0; }; },  
+ 7564439: () => { performance.now = Module['emscripten_get_now_backup']; }
 };
 
 
@@ -1723,21 +1723,6 @@ var ASM_CONSTS = {
           }
       }
 
-  function _CreateUserWithEmail(emailPtr, passwordPtr) {
-          var email = UTF8ToString(emailPtr);
-          var password = UTF8ToString(passwordPtr);
-          
-          try {
-              window.firebaseCreateUserWithEmail(email, password);
-              return true;
-          } catch (e) {
-              console.error("이메일 회원가입 중 오류 발생:", e);
-              var errorMessage = "회원가입 처리 중 오류가 발생했습니다.";
-              window.unityInstance.SendMessage("AuthManager", "OnAuthError", errorMessage);
-              return false;
-          }
-      }
-
   function _GenerateQRCode(textPtr, size) {
           var text = UTF8ToString(textPtr);
           try {
@@ -1782,6 +1767,30 @@ var ASM_CONSTS = {
         HEAPF64[usedJSptr] = NaN;
       }
     }
+
+  function _GetURLParameter(paramNamePtr) {
+          var paramName = UTF8ToString(paramNamePtr);
+          var value = '';
+          
+          try {
+              var urlParams = new URLSearchParams(window.location.search);
+              var paramValue = urlParams.get(paramName);
+              
+              if (paramValue) {
+                  value = paramValue;
+                  console.log(`URL 파라미터 가져옴: ${paramName}=${value}`);
+              } else {
+                  console.log(`URL 파라미터 없음: ${paramName}`);
+              }
+          } catch (e) {
+              console.error(`URL 파라미터 가져오기 오류: ${e.message}`);
+          }
+          
+          var bufferSize = lengthBytesUTF8(value) + 1;
+          var buffer = _malloc(bufferSize);
+          stringToUTF8(value, buffer, bufferSize);
+          return buffer;
+      }
 
   function _IsInitialized() {
           try {
@@ -7790,6 +7799,18 @@ var ASM_CONSTS = {
               return window.firebaseSetupDataListener(path);
           } else {
               console.error("firebaseSetupDataListener 함수가 정의되지 않았습니다.");
+              return false;
+          }
+      }
+
+  function _SignInAnonymously() {
+          try {
+              window.firebaseSignInAnonymously();
+              return true;
+          } catch (e) {
+              console.error("익명 로그인 중 오류 발생:", e);
+              var errorMessage = "익명 로그인 처리 중 오류가 발생했습니다.";
+              window.unityInstance.SendMessage("AuthManager", "OnAuthError", errorMessage);
               return false;
           }
       }
@@ -16606,11 +16627,11 @@ var wasmImports = {
   "CheckAuthState": _CheckAuthState,
   "CheckURLForSessionCode": _CheckURLForSessionCode,
   "CopyToClipboard": _CopyToClipboard,
-  "CreateUserWithEmail": _CreateUserWithEmail,
   "GenerateQRCode": _GenerateQRCode,
   "GetCurrentUser": _GetCurrentUser,
   "GetJSLoadTimeInfo": _GetJSLoadTimeInfo,
   "GetJSMemoryInfo": _GetJSMemoryInfo,
+  "GetURLParameter": _GetURLParameter,
   "IsInitialized": _IsInitialized,
   "JS_Accelerometer_IsRunning": _JS_Accelerometer_IsRunning,
   "JS_Accelerometer_Start": _JS_Accelerometer_Start,
@@ -16709,6 +16730,7 @@ var wasmImports = {
   "SaveData": _SaveData,
   "SendPasswordResetEmail": _SendPasswordResetEmail,
   "SetupDataListener": _SetupDataListener,
+  "SignInAnonymously": _SignInAnonymously,
   "SignInWithEmail": _SignInWithEmail,
   "SignOut": _SignOut,
   "__assert_fail": ___assert_fail,

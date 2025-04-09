@@ -1,5 +1,14 @@
 // Unity와 웹 브라우저 간의 통신을 관리하는 브릿지
 (function() {
+    // URL 파라미터 확인 함수
+    window.checkURLForSessionCode = function() {
+        if (typeof window.getURLParameter === 'function') {
+            window.getURLParameter('session');
+        } else {
+            console.log('URL 파라미터 처리 함수가 로드되지 않았습니다.');
+        }
+    };
+    
     // Unity 인스턴스 설정 함수
     window.setUnityInstance = function(unityInstance) {
         window.unityInstance = unityInstance;
