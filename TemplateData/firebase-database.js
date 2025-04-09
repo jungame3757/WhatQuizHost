@@ -220,3 +220,63 @@ window.firebaseRemoveDataListener = function(path) {
         return false;
     }
 };
+
+// 트랜잭션을 사용하여 players 배열만 업데이트
+window.UpdatePlayers = function(sessionId, playersJson) {
+    if (!window.firebaseInitialized) {
+        console.error("Firebase가 초기화되지 않았습니다.");
+        return false;
+    }
+
+    try {
+        const path = `sessions/${sessionId}`;
+        const dbRef = firebase.database().ref(path);
+        const playersData = JSON.parse(playersJson);
+
+        // 트랜잭션 사용: 다른 데이터는 변경하지 않고 players 배열만 업데이트
+        dbRef.transaction(currentData => {
+            // 데이터가 존재하지 않는 경우 취소
+            if (currentData === null) {
+                console.log(`세션이 존재하지 않습니다: ${path}`);
+                return; // 트랜잭션 취소
+            }
+            
+            // 기존 데이터 복사
+            const updatedData = { ...currentData };
+            
+            // players 배열만 업데이트
+            updatedData.players = playersData.players;
+            
+            return updatedData;
+        })
+        .then(result => {
+            if (result.committed) {
+                console.log(`플레이어 데이터 업데이트 성공: ${path}`);
+                
+                // Unity에 성공 알림
+                if (window.unityInstance) {
+                    window.unityInstance.SendMessage("DatabaseManager", "OnDataSaved", path);
+                }
+            } else {
+                console.log(`플레이어 데이터 업데이트 취소: ${path}`);
+                
+                // Unity에 오류 알림
+                if (window.unityInstance) {
+                    window.unityInstance.SendMessage("DatabaseManager", "OnDatabaseError", "세션 업데이트 취소");
+                }
+            }
+        }).catch(error => {
+            console.error(`플레이어 데이터 업데이트 오류: ${error}`);
+            
+            // Unity에 오류 알림
+            if (window.unityInstance) {
+                window.unityInstance.SendMessage("DatabaseManager", "OnDatabaseError", error.message);
+            }
+        });
+
+        return true;
+    } catch (e) {
+        console.error("플레이어 데이터 업데이트 중 오류 발생:", e);
+        return false;
+    }
+};
