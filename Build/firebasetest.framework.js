@@ -1287,10 +1287,10 @@ function dbg(text) {
 // === Body ===
 
 var ASM_CONSTS = {
-  7565056: () => { Module['emscripten_get_now_backup'] = performance.now; },  
- 7565111: ($0) => { performance.now = function() { return $0; }; },  
- 7565159: ($0) => { performance.now = function() { return $0; }; },  
- 7565207: () => { performance.now = Module['emscripten_get_now_backup']; }
+  7565072: () => { Module['emscripten_get_now_backup'] = performance.now; },  
+ 7565127: ($0) => { performance.now = function() { return $0; }; },  
+ 7565175: ($0) => { performance.now = function() { return $0; }; },  
+ 7565223: () => { performance.now = Module['emscripten_get_now_backup']; }
 };
 
 
@@ -7840,7 +7840,39 @@ var ASM_CONSTS = {
           }
       }
 
-  function _UpdatePlayers(sessionIdPtr, playersJsonPtr) {
+  function _UpdatePlayerIndividually(sessionIdPtr, playerIdPtr, playerNamePtr) {
+          var sessionId = UTF8ToString(sessionIdPtr);
+          var playerId = UTF8ToString(playerIdPtr);
+          var playerName = UTF8ToString(playerNamePtr);
+          
+          if (typeof window.UpdatePlayers === 'function') {
+              return window.UpdatePlayers(sessionId, playerId, playerName);
+          } else {
+              console.error("UpdatePlayers 함수가 정의되지 않았습니다.");
+              
+              // 대체 로직 수행
+              try {
+                  var path = "sessions/" + sessionId;
+                  console.log("직접 플레이어 추가 요청: " + playerId);
+                  
+                  // Unity에 오류 메시지 전달
+                  if (window.unityInstance) {
+                      window.unityInstance.SendMessage("DatabaseManager", "OnDatabaseError", "UpdatePlayers 함수가 정의되지 않았습니다.");
+                  }
+                  return false;
+              } catch (e) {
+                  console.error("플레이어 추가 중 오류 발생:", e);
+                  
+                  // Unity에 오류 메시지 전달
+                  if (window.unityInstance) {
+                      window.unityInstance.SendMessage("DatabaseManager", "OnDatabaseError", e.message);
+                  }
+                  return false;
+              }
+          }
+      }
+
+  function _UpdateSessionPlayersDirectly(sessionIdPtr, playersJsonPtr) {
           var sessionId = UTF8ToString(sessionIdPtr);
           var playersJson = UTF8ToString(playersJsonPtr);
           
@@ -16772,7 +16804,8 @@ var wasmImports = {
   "SignInAnonymously": _SignInAnonymously,
   "SignInWithEmail": _SignInWithEmail,
   "SignOut": _SignOut,
-  "UpdatePlayers": _UpdatePlayers,
+  "UpdatePlayerIndividually": _UpdatePlayerIndividually,
+  "UpdateSessionPlayersDirectly": _UpdateSessionPlayersDirectly,
   "__assert_fail": ___assert_fail,
   "__cxa_begin_catch": ___cxa_begin_catch,
   "__cxa_end_catch": ___cxa_end_catch,

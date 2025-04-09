@@ -222,7 +222,7 @@ window.firebaseRemoveDataListener = function(path) {
 };
 
 // 트랜잭션을 사용하여 players 배열만 업데이트
-window.UpdatePlayers = function(sessionId, playersJson) {
+window.UpdatePlayers = function(sessionId, playersJsonOrId, playerName) {
     if (!window.firebaseInitialized) {
         console.error("Firebase가 초기화되지 않았습니다.");
         return false;
@@ -230,53 +230,102 @@ window.UpdatePlayers = function(sessionId, playersJson) {
 
     try {
         const path = `sessions/${sessionId}`;
-        const dbRef = firebase.database().ref(path);
-        const playersData = JSON.parse(playersJson);
-
-        // 트랜잭션 사용: 다른 데이터는 변경하지 않고 players 배열만 업데이트
-        dbRef.transaction(currentData => {
-            // 데이터가 존재하지 않는 경우 취소
-            if (currentData === null) {
-                console.log(`세션이 존재하지 않습니다: ${path}`);
-                return; // 트랜잭션 취소
-            }
-            
-            // 기존 데이터 복사
-            const updatedData = { ...currentData };
-            
-            // players 배열만 업데이트
-            updatedData.players = playersData.players;
-            
-            return updatedData;
-        })
-        .then(result => {
-            if (result.committed) {
-                console.log(`플레이어 데이터 업데이트 성공: ${path}`);
-                
-                // Unity에 성공 알림
-                if (window.unityInstance) {
-                    window.unityInstance.SendMessage("DatabaseManager", "OnDataSaved", path);
+        const playersRef = firebase.database().ref(path).child('players');
+        
+        // 매개변수 형식 확인 (2가지 호출 방식 지원)
+        let playerId, playerData;
+        
+        if (playerName) {
+            // 단일 플레이어 추가/수정 방식 (sessionId, playerId, playerName)
+            playerId = playersJsonOrId;
+            playerData = null; // 아직 데이터 없음, 나중에 생성
+        } else {
+            // 전체 players 배열 업데이트 방식 (sessionId, playersJson)
+            try {
+                const playersData = JSON.parse(playersJsonOrId);
+                if (playersData && playersData.players) {
+                    // 전체 배열 업데이트 방식
+                    // players 배열 직접 업데이트
+                    playersRef.set(playersData.players)
+                        .then(() => {
+                            console.log(`플레이어 데이터 업데이트 성공: ${path} (${playersData.players.length}명)`);
+                            if (window.unityInstance) {
+                                window.unityInstance.SendMessage("DatabaseManager", "OnDataSaved", path);
+                            }
+                        })
+                        .catch(error => {
+                            console.error(`플레이어 데이터 업데이트 오류: ${error}`);
+                            if (window.unityInstance) {
+                                window.unityInstance.SendMessage("DatabaseManager", "OnDatabaseError", error.message);
+                            }
+                        });
+                    return true;
                 }
-            } else {
-                console.log(`플레이어 데이터 업데이트 취소: ${path}`);
-                
-                // Unity에 오류 알림
-                if (window.unityInstance) {
-                    window.unityInstance.SendMessage("DatabaseManager", "OnDatabaseError", "세션 업데이트 취소");
-                }
+            } catch (e) {
+                console.error("플레이어 JSON 파싱 오류:", e);
+                // 객체가 아닌 경우 단일 플레이어 추가 방식으로 간주
+                playerId = playersJsonOrId;
+                playerData = null;
             }
-        }).catch(error => {
-            console.error(`플레이어 데이터 업데이트 오류: ${error}`);
-            
-            // Unity에 오류 알림
-            if (window.unityInstance) {
-                window.unityInstance.SendMessage("DatabaseManager", "OnDatabaseError", error.message);
-            }
-        });
+        }
+        
+        // 단일 플레이어 추가/수정 방식 처리
+        if (playerId) {
+            // 세션 데이터 먼저 가져오기
+            firebase.database().ref(path).once('value')
+                .then(snapshot => {
+                    const sessionData = snapshot.val();
+                    if (!sessionData) {
+                        console.log(`세션이 존재하지 않습니다: ${path}`);
+                        if (window.unityInstance) {
+                            window.unityInstance.SendMessage("DatabaseManager", "OnDatabaseError", "세션이 존재하지 않습니다");
+                        }
+                        return;
+                    }
+                    
+                    // 기존 players 배열 가져오기
+                    let players = sessionData.players || [];
+                    
+                    // 플레이어 찾기
+                    const playerIndex = players.findIndex(p => p.id === playerId);
+                    
+                    if (playerIndex >= 0) {
+                        // 기존 플레이어 업데이트
+                        console.log(`기존 플레이어 업데이트: ${playerId}`);
+                        players[playerIndex].name = playerName;
+                    } else {
+                        // 새 플레이어 추가
+                        console.log(`새 플레이어 추가: ${playerId}`);
+                        players.push({
+                            id: playerId,
+                            name: playerName || "게스트",
+                            isReady: false
+                        });
+                    }
+                    
+                    // players 배열 업데이트
+                    return playersRef.set(players);
+                })
+                .then(() => {
+                    console.log(`플레이어 추가/수정 성공: ${playerId}`);
+                    if (window.unityInstance) {
+                        window.unityInstance.SendMessage("DatabaseManager", "OnDataSaved", path);
+                    }
+                })
+                .catch(error => {
+                    console.error(`플레이어 추가/수정 오류: ${error}`);
+                    if (window.unityInstance) {
+                        window.unityInstance.SendMessage("DatabaseManager", "OnDatabaseError", error.message);
+                    }
+                });
+        }
 
         return true;
     } catch (e) {
         console.error("플레이어 데이터 업데이트 중 오류 발생:", e);
+        if (window.unityInstance) {
+            window.unityInstance.SendMessage("DatabaseManager", "OnDatabaseError", e.message);
+        }
         return false;
     }
 };
