@@ -1287,10 +1287,10 @@ function dbg(text) {
 // === Body ===
 
 var ASM_CONSTS = {
-  7565904: () => { Module['emscripten_get_now_backup'] = performance.now; },  
- 7565959: ($0) => { performance.now = function() { return $0; }; },  
- 7566007: ($0) => { performance.now = function() { return $0; }; },  
- 7566055: () => { performance.now = Module['emscripten_get_now_backup']; }
+  7564160: () => { Module['emscripten_get_now_backup'] = performance.now; },  
+ 7564215: ($0) => { performance.now = function() { return $0; }; },  
+ 7564263: ($0) => { performance.now = function() { return $0; }; },  
+ 7564311: () => { performance.now = Module['emscripten_get_now_backup']; }
 };
 
 
@@ -1647,6 +1647,39 @@ var ASM_CONSTS = {
         err(text);
       }
     }
+
+  function _AddPlayerTransaction(pathPtr, playerIdPtr, playerDataPtr) {
+          var path = UTF8ToString(pathPtr);
+          var playerId = UTF8ToString(playerIdPtr);
+          var playerData = UTF8ToString(playerDataPtr);
+          
+          if (typeof window.firebaseAddPlayerTransaction === 'function') {
+              return window.firebaseAddPlayerTransaction(path, playerId, playerData);
+          } else {
+              console.error("firebaseAddPlayerTransaction 함수가 정의되지 않았습니다.");
+              
+              try {
+                  // 함수가 없는 경우, 기본 파이어베이스 저장 방식 사용
+                  if (typeof window.firebaseSaveData === 'function') {
+                      // Unity에 오류 메시지 전달
+                      if (window.unityInstance) {
+                          window.unityInstance.SendMessage("DatabaseManager", "OnDatabaseError", 
+                              "트랜잭션 함수가 없습니다. firebase-database.js 파일을 확인하세요.");
+                      }
+                      return false;
+                  }
+              } catch (e) {
+                  console.error("플레이어 추가 중 오류 발생:", e);
+                  
+                  // Unity에 오류 메시지 전달
+                  if (window.unityInstance) {
+                      window.unityInstance.SendMessage("DatabaseManager", "OnDatabaseError", e.message);
+                  }
+                  return false;
+              }
+              return false;
+          }
+      }
 
   function _CheckAndSaveData(pathPtr, dataPtr) {
           var path = UTF8ToString(pathPtr);
@@ -7766,6 +7799,38 @@ var ASM_CONSTS = {
           }
       }
 
+  function _RemovePlayerTransaction(pathPtr, playerIdPtr) {
+          var path = UTF8ToString(pathPtr);
+          var playerId = UTF8ToString(playerIdPtr);
+          
+          if (typeof window.firebaseRemovePlayerTransaction === 'function') {
+              return window.firebaseRemovePlayerTransaction(path, playerId);
+          } else {
+              console.error("firebaseRemovePlayerTransaction 함수가 정의되지 않았습니다.");
+              
+              try {
+                  // 함수가 없는 경우, 기본 파이어베이스 저장 방식 사용
+                  if (typeof window.firebaseSaveData === 'function') {
+                      // Unity에 오류 메시지 전달
+                      if (window.unityInstance) {
+                          window.unityInstance.SendMessage("DatabaseManager", "OnDatabaseError", 
+                              "트랜잭션 함수가 없습니다. firebase-database.js 파일을 확인하세요.");
+                      }
+                      return false;
+                  }
+              } catch (e) {
+                  console.error("플레이어 제거 중 오류 발생:", e);
+                  
+                  // Unity에 오류 메시지 전달
+                  if (window.unityInstance) {
+                      window.unityInstance.SendMessage("DatabaseManager", "OnDatabaseError", e.message);
+                  }
+                  return false;
+              }
+              return false;
+          }
+      }
+
   function _SaveData(pathPtr, dataPtr) {
           var path = UTF8ToString(pathPtr);
           var data = UTF8ToString(dataPtr);
@@ -7837,77 +7902,6 @@ var ASM_CONSTS = {
           } catch (e) {
               console.error("로그아웃 중 오류 발생:", e);
               return false;
-          }
-      }
-
-  function _UpdatePlayerIndividually(sessionIdPtr, playerIdPtr, playerNamePtr) {
-          var sessionId = UTF8ToString(sessionIdPtr);
-          var playerId = UTF8ToString(playerIdPtr);
-          var playerName = UTF8ToString(playerNamePtr);
-          
-          if (typeof window.UpdatePlayers === 'function') {
-              return window.UpdatePlayers(sessionId, playerId, playerName);
-          } else {
-              console.error("UpdatePlayers 함수가 정의되지 않았습니다.");
-              
-              // 대체 로직 수행
-              try {
-                  var path = "sessions/" + sessionId;
-                  console.log("직접 플레이어 추가 요청: " + playerId);
-                  
-                  // Unity에 오류 메시지 전달
-                  if (window.unityInstance) {
-                      window.unityInstance.SendMessage("DatabaseManager", "OnDatabaseError", "UpdatePlayers 함수가 정의되지 않았습니다.");
-                  }
-                  return false;
-              } catch (e) {
-                  console.error("플레이어 추가 중 오류 발생:", e);
-                  
-                  // Unity에 오류 메시지 전달
-                  if (window.unityInstance) {
-                      window.unityInstance.SendMessage("DatabaseManager", "OnDatabaseError", e.message);
-                  }
-                  return false;
-              }
-          }
-      }
-
-  function _UpdateSessionPlayersDirectly(sessionIdPtr, playersJsonPtr) {
-          var sessionId = UTF8ToString(sessionIdPtr);
-          var playersJson = UTF8ToString(playersJsonPtr);
-          
-          if (typeof window.UpdatePlayers === 'function') {
-              return window.UpdatePlayers(sessionId, playersJson);
-          } else {
-              console.error("UpdatePlayers 함수가 정의되지 않았습니다.");
-              
-              // 대체 로직: 기본 타입에 의존
-              try {
-                  // 경로 가져오기
-                  var path = "sessions/" + sessionId;
-                  
-                  // 기본 저장 방식 사용
-                  if (typeof window.firebaseSaveData === 'function') {
-                      window.firebaseSaveData(path, playersJson);
-                      return true;
-                  } else {
-                      console.error("firebase 저장 기능이 없습니다.");
-                      
-                      // Unity에 오류 메시지 전달
-                      if (window.unityInstance) {
-                          window.unityInstance.SendMessage("DatabaseManager", "OnDatabaseError", "Firebase 저장 기능을 찾을 수 없습니다.");
-                      }
-                      return false;
-                  }
-              } catch (e) {
-                  console.error("플레이어 데이터 업데이트 중 오류 발생:", e);
-                  
-                  // Unity에 오류 메시지 전달
-                  if (window.unityInstance) {
-                      window.unityInstance.SendMessage("DatabaseManager", "OnDatabaseError", e.message);
-                  }
-                  return false;
-              }
           }
       }
 
@@ -16694,6 +16688,7 @@ function checkIncomingModuleAPI() {
   ignoredModuleProp('fetchSettings');
 }
 var wasmImports = {
+  "AddPlayerTransaction": _AddPlayerTransaction,
   "CheckAndSaveData": _CheckAndSaveData,
   "CheckAuthState": _CheckAuthState,
   "CheckURLForSessionCode": _CheckURLForSessionCode,
@@ -16798,14 +16793,13 @@ var wasmImports = {
   "LoadData": _LoadData,
   "RemoveData": _RemoveData,
   "RemoveDataListener": _RemoveDataListener,
+  "RemovePlayerTransaction": _RemovePlayerTransaction,
   "SaveData": _SaveData,
   "SendPasswordResetEmail": _SendPasswordResetEmail,
   "SetupDataListener": _SetupDataListener,
   "SignInAnonymously": _SignInAnonymously,
   "SignInWithEmail": _SignInWithEmail,
   "SignOut": _SignOut,
-  "UpdatePlayerIndividually": _UpdatePlayerIndividually,
-  "UpdateSessionPlayersDirectly": _UpdateSessionPlayersDirectly,
   "__assert_fail": ___assert_fail,
   "__cxa_begin_catch": ___cxa_begin_catch,
   "__cxa_end_catch": ___cxa_end_catch,

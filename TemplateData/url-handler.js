@@ -37,48 +37,15 @@
     
     // Unity 로드 완료 후 보류된 URL 파라미터 처리
     window.processPendingURLParameter = function() {
-        try {
-            console.log("보류된 URL 파라미터 처리 시도");
+        if (window.pendingURLParameter && window.unityInstance) {
+            const { name, value } = window.pendingURLParameter;
             
-            // Unity 인스턴스 확인
-            if (!window.unityInstance) {
-                console.warn("Unity 인스턴스가 아직 준비되지 않았습니다.");
-                return;
+            if (name === "session") {
+                window.unityInstance.SendMessage("URLHandler", "OnSessionCodeFound", value);
             }
             
-            // 보류된 파라미터 처리
-            if (window.pendingURLParameter) {
-                const { name, value } = window.pendingURLParameter;
-                console.log(`보류된 URL 파라미터 처리: ${name}=${value}`);
-                
-                if (name === "session") {
-                    try {
-                        window.unityInstance.SendMessage("URLHandler", "OnSessionCodeFound", value);
-                        console.log(`세션 코드를 Unity로 전송했습니다: ${value}`);
-                    } catch (sendError) {
-                        console.error(`URL 파라미터 전송 중 오류: ${sendError.message}`);
-                    }
-                }
-                
-                // 처리 완료 후 보류 데이터 제거
-                window.pendingURLParameter = null;
-            } else {
-                // URL에서 직접 파라미터 확인
-                const urlParams = new URLSearchParams(window.location.search);
-                const sessionCode = urlParams.get('session');
-                
-                if (sessionCode) {
-                    console.log(`URL에서 발견된 세션 코드: ${sessionCode}`);
-                    try {
-                        window.unityInstance.SendMessage("URLHandler", "OnSessionCodeFound", sessionCode);
-                        console.log(`세션 코드를 Unity로 전송했습니다: ${sessionCode}`);
-                    } catch (sendError) {
-                        console.error(`URL 파라미터 전송 중 오류: ${sendError.message}`);
-                    }
-                }
-            }
-        } catch (error) {
-            console.error(`URL 파라미터 처리 중 예외 발생: ${error.message}`);
+            // 처리 완료 후 보류 데이터 제거
+            window.pendingURLParameter = null;
         }
     };
 })();
