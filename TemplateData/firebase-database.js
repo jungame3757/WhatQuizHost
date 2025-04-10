@@ -255,6 +255,17 @@ window.firebaseAddPlayerTransaction = function(path, playerId, playerData) {
                 // Unity에 데이터 저장 완료 알림
                 if (window.unityInstance) {
                     window.unityInstance.SendMessage("DatabaseManager", "OnDataSaved", path);
+                    
+                    // 전체 세션 데이터를 불러와서 OnDataChanged 이벤트도 발생시킴
+                    firebase.database().ref(path).once('value').then(snapshot => {
+                        const sessionData = snapshot.val();
+                        if (sessionData) {
+                            console.log("플레이어 추가 후 세션 데이터 변경 감지:", path);
+                            window.unityInstance.SendMessage("DatabaseManager", "OnDataChanged", JSON.stringify(sessionData));
+                        }
+                    }).catch(error => {
+                        console.error("세션 데이터 로드 오류:", error);
+                    });
                 }
             } else {
                 console.log(`플레이어 추가 취소됨: ${playerId}`);
@@ -320,6 +331,17 @@ window.firebaseRemovePlayerTransaction = function(path, playerId) {
                 // Unity에 데이터 저장 완료 알림
                 if (window.unityInstance) {
                     window.unityInstance.SendMessage("DatabaseManager", "OnDataSaved", path);
+                    
+                    // 전체 세션 데이터를 불러와서 OnDataChanged 이벤트도 발생시킴
+                    firebase.database().ref(path).once('value').then(snapshot => {
+                        const sessionData = snapshot.val();
+                        if (sessionData) {
+                            console.log("플레이어 제거 후 세션 데이터 변경 감지:", path);
+                            window.unityInstance.SendMessage("DatabaseManager", "OnDataChanged", JSON.stringify(sessionData));
+                        }
+                    }).catch(error => {
+                        console.error("세션 데이터 로드 오류:", error);
+                    });
                 }
             } else {
                 console.log(`플레이어 제거 취소됨: ${playerId}`);
