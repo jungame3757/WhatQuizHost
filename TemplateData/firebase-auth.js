@@ -82,15 +82,30 @@
 
     // 다음 함수들을 firebase-auth.js 파일에 추가
     window.checkAuthState = function() {
+        // 이미 firebase-init.js에서 처리되었는지 확인
+        if (window.isAuthStateChangeProcessed && window.currentUser) {
+            console.log("체크 시 중복 이벤트 방지: 이미 인증 이벤트가 처리되었음");
+            return;
+        }
+
         firebase.auth().onAuthStateChanged(function(user) {
             if (user) {
+                // 이미 처리된 경우 중복 호출 방지
+                if (window.isAuthStateChangeProcessed) {
+                    console.log("체크 콜백에서 중복 이벤트 방지");
+                    return;
+                }
+                window.isAuthStateChangeProcessed = true;
+                
                 // 사용자가 로그인된 상태
                 const userData = {
                     uid: user.uid,
                     email: user.email,
-                    displayName: user.displayName || user.email.split('@')[0]
+                    displayName: user.displayName || user.email.split('@')[0],
+                    isAnonymous: user.isAnonymous
                 };
 
+                console.log("checkAuthState에서 사용자 정보 전달");
                 // Unity에 사용자 정보 전달
                 if (window.unityInstance) {
                     window.unityInstance.SendMessage("AuthManager", "OnLoginSuccess", JSON.stringify(userData));

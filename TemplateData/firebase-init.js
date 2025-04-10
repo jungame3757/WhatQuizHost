@@ -43,6 +43,8 @@ window.initializeFirebase = function() {
         });
 
         // 인증 상태 변경 감지
+        // 인증 이벤트가 중복되지 않도록 추적 변수 추가
+        window.isAuthStateChangeProcessed = false;
         firebase.auth().onAuthStateChanged(function(user) {
             if (user) {
                 // 사용자가 로그인한 경우
@@ -58,14 +60,23 @@ window.initializeFirebase = function() {
                     isAnonymous: isAnonymous
                 };
 
-                // Unity에 로그인 정보 전송 (Unity 인스턴스가 준비된 경우)
-                if (window.unityInstance) {
-                    window.unityInstance.SendMessage("AuthManager", "OnLoginSuccess", JSON.stringify(window.currentUser));
+                // 중복 이벤트 방지 - 이미 처리한 경우 스킵
+                if (!window.isAuthStateChangeProcessed) {
+                    window.isAuthStateChangeProcessed = true;
+                    
+                    // Unity에 로그인 정보 전송 (Unity 인스턴스가 준비된 경우)
+                    if (window.unityInstance) {
+                        console.log("OnLoginSuccess 이벤트 전송 - 중복 방지 로직 적용");
+                        window.unityInstance.SendMessage("AuthManager", "OnLoginSuccess", JSON.stringify(window.currentUser));
+                    }
+                } else {
+                    console.log("중복 로그인 이벤트 방지: 이미 처리됨");
                 }
             } else {
                 // 사용자가 로그아웃한 경우
                 console.log("로그아웃 상태");
                 window.currentUser = null;
+                window.isAuthStateChangeProcessed = false; // 로그아웃 시 추적 변수 초기화
             }
         });
 
