@@ -52,44 +52,6 @@
             });
     };
 
-    // 이메일/비밀번호로 회원가입
-    window.firebaseCreateUserWithEmail = function(email, password) {
-        if (!window.firebaseInitialized) {
-            console.error("Firebase가 초기화되지 않았습니다.");
-            if (window.unityInstance) {
-                window.unityInstance.SendMessage("AuthManager", "OnAuthError", "Firebase가 초기화되지 않았습니다.");
-            }
-            return;
-        }
-
-        firebase.auth().createUserWithEmailAndPassword(email, password)
-            .then((userCredential) => {
-                // 회원가입 성공
-                const user = userCredential.user;
-                console.log("회원가입 성공:", user.email);
-
-                // Unity에 회원가입 성공 알림
-                if (window.unityInstance) {
-                    window.unityInstance.SendMessage("AuthManager", "OnSignUpSuccess");
-                }
-
-                // 자동 로그인 방지를 위해 로그아웃 처리
-                firebase.auth().signOut();
-            })
-            .catch((error) => {
-                // 회원가입 실패
-                console.error("회원가입 오류:", error.code, error.message);
-
-                const errorMessage = errorMessages[error.code] || error.message;
-                console.log("사용자에게 표시할 오류:", errorMessage);
-
-                // Unity에 오류 알림
-                if (window.unityInstance) {
-                    window.unityInstance.SendMessage("AuthManager", "OnAuthError", errorMessage);
-                }
-            });
-    };
-
     // 로그아웃
     window.firebaseSignOut = function() {
         if (!window.firebaseInitialized) {
@@ -125,40 +87,6 @@
             });
         }
         return null;
-    };
-
-    // 비밀번호 재설정 이메일 발송
-    window.firebaseSendPasswordResetEmail = function(email) {
-        if (!window.firebaseInitialized) {
-            console.error("Firebase가 초기화되지 않았습니다.");
-            if (window.unityInstance) {
-                window.unityInstance.SendMessage("AuthManager", "OnAuthError", "Firebase가 초기화되지 않았습니다.");
-            }
-            return;
-        }
-
-        firebase.auth().sendPasswordResetEmail(email)
-            .then(() => {
-                // 이메일 발송 성공
-                console.log("비밀번호 재설정 이메일 발송 성공:", email);
-
-                // Unity에 성공 알림
-                if (window.unityInstance) {
-                    window.unityInstance.SendMessage("AuthManager", "OnPasswordResetEmailSent");
-                }
-            })
-            .catch((error) => {
-                // 이메일 발송 실패
-                console.error("비밀번호 재설정 이메일 발송 오류:", error.code, error.message);
-
-                const errorMessage = errorMessages[error.code] || error.message;
-                console.log("사용자에게 표시할 오류:", errorMessage);
-
-                // Unity에 오류 알림
-                if (window.unityInstance) {
-                    window.unityInstance.SendMessage("AuthManager", "OnAuthError", errorMessage);
-                }
-            });
     };
 
     // 다음 함수들을 firebase-auth.js 파일에 추가

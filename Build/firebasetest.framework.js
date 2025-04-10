@@ -1287,10 +1287,10 @@ function dbg(text) {
 // === Body ===
 
 var ASM_CONSTS = {
-  7566608: () => { Module['emscripten_get_now_backup'] = performance.now; },  
- 7566663: ($0) => { performance.now = function() { return $0; }; },  
- 7566711: ($0) => { performance.now = function() { return $0; }; },  
- 7566759: () => { performance.now = Module['emscripten_get_now_backup']; }
+  7566592: () => { Module['emscripten_get_now_backup'] = performance.now; },  
+ 7566647: ($0) => { performance.now = function() { return $0; }; },  
+ 7566695: ($0) => { performance.now = function() { return $0; }; },  
+ 7566743: () => { performance.now = Module['emscripten_get_now_backup']; }
 };
 
 
@@ -7839,20 +7839,6 @@ var ASM_CONSTS = {
               return window.firebaseSaveData(path, data);
           } else {
               console.error("firebaseSaveData 함수가 정의되지 않았습니다.");
-              return false;
-          }
-      }
-
-  function _SendPasswordResetEmail(emailPtr) {
-          var email = UTF8ToString(emailPtr);
-          
-          try {
-              window.firebaseSendPasswordResetEmail(email);
-              return true;
-          } catch (e) {
-              console.error("비밀번호 재설정 이메일 발송 중 오류 발생:", e);
-              var errorMessage = "비밀번호 재설정 이메일 발송 중 오류가 발생했습니다.";
-              window.unityInstance.SendMessage("AuthManager", "OnAuthError", errorMessage);
               return false;
           }
       }
@@ -16795,7 +16781,6 @@ var wasmImports = {
   "RemoveDataListener": _RemoveDataListener,
   "RemovePlayerTransaction": _RemovePlayerTransaction,
   "SaveData": _SaveData,
-  "SendPasswordResetEmail": _SendPasswordResetEmail,
   "SetupDataListener": _SetupDataListener,
   "SignInAnonymously": _SignInAnonymously,
   "SignInWithEmail": _SignInWithEmail,
