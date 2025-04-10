@@ -9,9 +9,6 @@ window.unityInstance = null;
 // 현재 사용자 정보 저장
 window.currentUser = null;
 
-// 로그인 이벤트 중복 방지 플래그
-window.loginEventSent = false;
-
 // Firebase 초기화 함수
 window.initializeFirebase = function() {
     try {
@@ -49,35 +46,26 @@ window.initializeFirebase = function() {
         firebase.auth().onAuthStateChanged(function(user) {
             if (user) {
                 // 사용자가 로그인한 경우
-                console.log("사용자 로그인 상태:", user.email);
+                console.log("사용자 로그인 상태:", user.email || "익명 사용자");
+                
+                // 익명 사용자 확인
+                const isAnonymous = user.isAnonymous;
+                
                 window.currentUser = {
                     uid: user.uid,
-                    email: user.email,
-                    displayName: user.displayName || user.email.split('@')[0]
+                    email: isAnonymous ? 'anonymous@user.com' : user.email,
+                    displayName: isAnonymous ? '익명 사용자' : (user.displayName || user.email?.split('@')[0] || '사용자'),
+                    isAnonymous: isAnonymous
                 };
 
-                // 명시적 로그인에서 이미 이벤트를 보낸 경우, 중복 전송 방지
-                if (!window.loginEventSent) {
-                    window.loginEventSent = true;
-                    console.log("onAuthStateChanged에서 로그인 이벤트 전송");
-                    
-                    // Unity에 로그인 정보 전송 (Unity 인스턴스가 준비된 경우)
-                    if (window.unityInstance) {
-                        window.unityInstance.SendMessage("AuthManager", "OnLoginSuccess", JSON.stringify(window.currentUser));
-                    }
-                    
-                    // 5초 후 플래그 초기화 (다음 로그인을 위해)
-                    setTimeout(function() {
-                        window.loginEventSent = false;
-                    }, 5000);
-                } else {
-                    console.log("로그인 이벤트가 이미 전송됨 - onAuthStateChanged에서 중복 전송 방지");
+                // Unity에 로그인 정보 전송 (Unity 인스턴스가 준비된 경우)
+                if (window.unityInstance) {
+                    window.unityInstance.SendMessage("AuthManager", "OnLoginSuccess", JSON.stringify(window.currentUser));
                 }
             } else {
                 // 사용자가 로그아웃한 경우
                 console.log("로그아웃 상태");
                 window.currentUser = null;
-                window.loginEventSent = false; // 로그아웃 시 플래그 초기화
             }
         });
 
@@ -90,17 +78,9 @@ window.initializeFirebase = function() {
 
 // Unity 인스턴스가 준비되었을 때 저장된 사용자 정보 확인 및 전송
 window.checkAndSendSavedUserInfo = function() {
-    if (window.currentUser && window.unityInstance && !window.loginEventSent) {
-        window.loginEventSent = true;
+    if (window.currentUser && window.unityInstance) {
         console.log("저장된 사용자 정보를 Unity로 전송:", window.currentUser.displayName);
         window.unityInstance.SendMessage("AuthManager", "OnLoginSuccess", JSON.stringify(window.currentUser));
-        
-        // 5초 후 플래그 초기화
-        setTimeout(function() {
-            window.loginEventSent = false;
-        }, 5000);
-    } else if (window.loginEventSent) {
-        console.log("로그인 이벤트가 이미 전송됨 - checkAndSendSavedUserInfo에서 중복 전송 방지");
     }
 };
 

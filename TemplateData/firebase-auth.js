@@ -27,25 +27,7 @@
                 // 로그인 성공
                 const user = userCredential.user;
                 console.log("로그인 성공:", user.email);
-
-                // 로그인 이벤트 플래그 설정
-                window.loginEventSent = true;
-                console.log("명시적 로그인에서 로그인 이벤트 전송");
-                
-                // Unity에 로그인 성공 알림 - JSON 객체로 변경
-                const userData = {
-                    uid: user.uid,
-                    email: user.email,
-                    displayName: user.displayName || user.email.split('@')[0]
-                };
-                if (window.unityInstance) {
-                    window.unityInstance.SendMessage("AuthManager", "OnLoginSuccess", JSON.stringify(userData));
-                }
-                
-                // 5초 후 플래그 초기화 (다음 로그인을 위해)
-                setTimeout(function() {
-                    window.loginEventSent = false;
-                }, 5000);
+                // onAuthStateChanged 이벤트가 Unity에 로그인 상태 변경을 알릴 것임
             })
             .catch((error) => {
                 // 로그인 실패
@@ -109,22 +91,9 @@
                     displayName: user.displayName || user.email.split('@')[0]
                 };
 
-                // 이벤트 중복 방지
-                if (!window.loginEventSent) {
-                    window.loginEventSent = true;
-                    console.log("checkAuthState에서 로그인 이벤트 전송");
-                    
-                    // Unity에 사용자 정보 전달
-                    if (window.unityInstance) {
-                        window.unityInstance.SendMessage("AuthManager", "OnLoginSuccess", JSON.stringify(userData));
-                    }
-                    
-                    // 5초 후 플래그 초기화
-                    setTimeout(function() {
-                        window.loginEventSent = false;
-                    }, 5000);
-                } else {
-                    console.log("로그인 이벤트가 이미 전송됨 - checkAuthState에서 중복 전송 방지");
+                // Unity에 사용자 정보 전달
+                if (window.unityInstance) {
+                    window.unityInstance.SendMessage("AuthManager", "OnLoginSuccess", JSON.stringify(userData));
                 }
             }
         });
@@ -161,25 +130,7 @@
                 // 익명 로그인 성공
                 const user = userCredential.user;
                 console.log("익명 로그인 성공:", user.uid);
-
-                // 로그인 이벤트 플래그 설정
-                window.loginEventSent = true;
-                console.log("익명 로그인에서 로그인 이벤트 전송");
-                
-                // Unity에 로그인 성공 알림 - JSON 객체로 변경
-                const userData = {
-                    uid: user.uid,
-                    email: 'anonymous@user.com', // 익명 사용자에게는 기본 이메일 제공
-                    displayName: '익명 사용자' // 익명 사용자의 기본 표시명
-                };
-                if (window.unityInstance) {
-                    window.unityInstance.SendMessage("AuthManager", "OnLoginSuccess", JSON.stringify(userData));
-                }
-                
-                // 5초 후 플래그 초기화 (다음 로그인을 위해)
-                setTimeout(function() {
-                    window.loginEventSent = false;
-                }, 5000);
+                // onAuthStateChanged 이벤트가 Unity에 로그인 상태 변경을 알릴 것임
             })
             .catch((error) => {
                 // 로그인 실패
