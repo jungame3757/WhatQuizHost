@@ -1287,10 +1287,10 @@ function dbg(text) {
 // === Body ===
 
 var ASM_CONSTS = {
-  7567072: () => { Module['emscripten_get_now_backup'] = performance.now; },  
- 7567127: ($0) => { performance.now = function() { return $0; }; },  
- 7567175: ($0) => { performance.now = function() { return $0; }; },  
- 7567223: () => { performance.now = Module['emscripten_get_now_backup']; }
+  7567520: () => { Module['emscripten_get_now_backup'] = performance.now; },  
+ 7567575: ($0) => { performance.now = function() { return $0; }; },  
+ 7567623: ($0) => { performance.now = function() { return $0; }; },  
+ 7567671: () => { performance.now = Module['emscripten_get_now_backup']; }
 };
 
 
@@ -1745,6 +1745,16 @@ var ASM_CONSTS = {
           }
       }
 
+  function _ClearLocalStorageSession() {
+          try {
+              window.clearLocalStorageSession();
+              return true;
+          } catch (e) {
+              console.error("세션 정보 삭제 중 오류 발생:", e);
+              return false;
+          }
+      }
+
   function _CopyToClipboard(textPtr) {
           var text = UTF8ToString(textPtr);
           try {
@@ -1800,6 +1810,22 @@ var ASM_CONSTS = {
         HEAPF64[usedJSptr] = NaN;
       }
     }
+
+  function _GetSessionFromLocalStorage() {
+          try {
+              var sessionData = window.getSessionFromLocalStorage();
+              if (sessionData) {
+                  var bufferSize = lengthBytesUTF8(sessionData) + 1;
+                  var buffer = _malloc(bufferSize);
+                  stringToUTF8(sessionData, buffer, bufferSize);
+                  return buffer;
+              }
+              return null;
+          } catch (e) {
+              console.error("세션 정보 불러오기 중 오류 발생:", e);
+              return null;
+          }
+      }
 
   function _GetURLParameter(paramNamePtr) {
           var paramName = UTF8ToString(paramNamePtr);
@@ -7843,6 +7869,18 @@ var ASM_CONSTS = {
           }
       }
 
+  function _SaveSessionToLocalStorage(sessionDataPtr, isHostPtr) {
+          var sessionData = UTF8ToString(sessionDataPtr);
+          var isHost = UTF8ToString(isHostPtr) === "true";
+          try {
+              window.saveSessionToLocalStorage(sessionData, isHost);
+              return true;
+          } catch (e) {
+              console.error("세션 정보 저장 중 오류 발생:", e);
+              return false;
+          }
+      }
+
   function _SetupDataListener(pathPtr) {
           var path = UTF8ToString(pathPtr);
           
@@ -7850,6 +7888,16 @@ var ASM_CONSTS = {
               return window.firebaseSetupDataListener(path);
           } else {
               console.error("firebaseSetupDataListener 함수가 정의되지 않았습니다.");
+              return false;
+          }
+      }
+
+  function _ShowSessionRecoveryDialog() {
+          try {
+              window.showSessionRecoveryDialog();
+              return true;
+          } catch (e) {
+              console.error("세션 복구 대화상자 표시 중 오류 발생:", e);
               return false;
           }
       }
@@ -16678,11 +16726,13 @@ var wasmImports = {
   "CheckAndSaveData": _CheckAndSaveData,
   "CheckAuthState": _CheckAuthState,
   "CheckURLForSessionCode": _CheckURLForSessionCode,
+  "ClearLocalStorageSession": _ClearLocalStorageSession,
   "CopyToClipboard": _CopyToClipboard,
   "GenerateQRCode": _GenerateQRCode,
   "GetCurrentUser": _GetCurrentUser,
   "GetJSLoadTimeInfo": _GetJSLoadTimeInfo,
   "GetJSMemoryInfo": _GetJSMemoryInfo,
+  "GetSessionFromLocalStorage": _GetSessionFromLocalStorage,
   "GetURLParameter": _GetURLParameter,
   "IsInitialized": _IsInitialized,
   "JS_Accelerometer_IsRunning": _JS_Accelerometer_IsRunning,
@@ -16781,7 +16831,9 @@ var wasmImports = {
   "RemoveDataListener": _RemoveDataListener,
   "RemovePlayerTransaction": _RemovePlayerTransaction,
   "SaveData": _SaveData,
+  "SaveSessionToLocalStorage": _SaveSessionToLocalStorage,
   "SetupDataListener": _SetupDataListener,
+  "ShowSessionRecoveryDialog": _ShowSessionRecoveryDialog,
   "SignInAnonymously": _SignInAnonymously,
   "SignInWithEmail": _SignInWithEmail,
   "SignOut": _SignOut,
