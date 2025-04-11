@@ -138,7 +138,7 @@
     };
 
     // 세션 복구 대화상자 생성 및 표시
-    window.showSessionRecoveryDialog = function() {
+    window.showSessionRecoveryDialog = function(isHost) {
         try {
             const sessionInfo = JSON.parse(localStorage.getItem('currentSession'));
             if (!sessionInfo) {
@@ -155,6 +155,39 @@
                 return false;
             }
 
+            // 참여자(비호스트)이고 URL에 세션 코드가 있는 경우
+            if (!isHost) {
+                const urlParams = new URLSearchParams(window.location.search);
+                const urlSessionCode = urlParams.get('session');
+                
+                if (urlSessionCode) {
+                    // 세션 데이터에서 sessionId 추출
+                    const sessionData = JSON.parse(sessionInfo.sessionData);
+                    const storedSessionCode = sessionData.sessionId;
+                    
+                    console.log('URL 세션 코드:', urlSessionCode, '저장된 세션 코드:', storedSessionCode);
+                    
+                    // URL 세션 코드와 저장된 세션 코드가 같은 경우 자동으로 복구
+                    if (urlSessionCode === storedSessionCode) {
+                        console.log('URL 세션 코드와 저장된 세션 코드가 일치하여 자동으로 복구합니다.');
+                        if (window.unityInstance) {
+                            window.unityInstance.SendMessage('GameSessionManager', 'OnSessionRecoveryDecision', 'recover');
+                        }
+                        return true;
+                    }
+                    // URL 세션 코드가 다른 경우 URL 세션 코드로 접속
+                    else {
+                        console.log('URL 세션 코드와 저장된 세션 코드가 다릅니다. URL 세션으로 접속합니다.');
+                        localStorage.removeItem('currentSession'); // 기존 세션 삭제
+                        if (window.unityInstance) {
+                            window.unityInstance.SendMessage('GameSessionManager', 'JoinSessionFromURL', urlSessionCode);
+                        }
+                        return true;
+                    }
+                }
+            }
+
+            // 호스트이거나, 참가자라도 URL에 세션 코드가 없는 경우: 선택 대화상자 표시
             // 대화상자 생성
             const dialogOverlay = document.createElement('div');
             dialogOverlay.id = 'session-recovery-overlay';

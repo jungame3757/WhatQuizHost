@@ -7892,9 +7892,10 @@ var ASM_CONSTS = {
           }
       }
 
-  function _ShowSessionRecoveryDialog() {
+  function _ShowSessionRecoveryDialog(isHostPtr) {
           try {
-              window.showSessionRecoveryDialog();
+              var isHost = UTF8ToString(isHostPtr) === "true";
+              window.showSessionRecoveryDialog(isHost);
               return true;
           } catch (e) {
               console.error("세션 복구 대화상자 표시 중 오류 발생:", e);
