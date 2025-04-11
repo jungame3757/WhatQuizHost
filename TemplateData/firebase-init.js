@@ -15,11 +15,6 @@ window.initializeFirebase = function() {
         // 이미 초기화된 경우 처리
         if (window.firebaseInitialized) {
             console.log("Firebase가 이미 초기화되었습니다.");
-            
-            // 초기화 완료 이벤트 발생
-            const event = new Event('firebaseInitialized');
-            window.dispatchEvent(event);
-            
             return true;
         }
 
@@ -47,9 +42,43 @@ window.initializeFirebase = function() {
             firebaseLoadData: typeof window.firebaseLoadData === 'function'
         });
 
-        // 초기화 완료 이벤트 발생
-        const event = new Event('firebaseInitialized');
-        window.dispatchEvent(event);
+        // 인증 상태 변경 감지
+        // 인증 이벤트가 중복되지 않도록 추적 변수 추가
+        window.isAuthStateChangeProcessed = false;
+        firebase.auth().onAuthStateChanged(function(user) {
+            if (user) {
+                // 사용자가 로그인한 경우
+                console.log("사용자 로그인 상태:", user.email || "익명 사용자");
+                
+                // 익명 사용자 확인
+                const isAnonymous = user.isAnonymous;
+                
+                window.currentUser = {
+                    uid: user.uid,
+                    email: isAnonymous ? 'anonymous@user.com' : user.email,
+                    displayName: isAnonymous ? '익명 사용자' : (user.displayName || user.email?.split('@')[0] || '사용자'),
+                    isAnonymous: isAnonymous
+                };
+
+                // 중복 이벤트 방지 - 이미 처리한 경우 스킵
+                if (!window.isAuthStateChangeProcessed) {
+                    window.isAuthStateChangeProcessed = true;
+                    
+                    // Unity에 로그인 정보 전송 (Unity 인스턴스가 준비된 경우)
+                    if (window.unityInstance) {
+                        console.log("OnLoginSuccess 이벤트 전송 - 중복 방지 로직 적용");
+                        window.unityInstance.SendMessage("AuthManager", "OnLoginSuccess", JSON.stringify(window.currentUser));
+                    }
+                } else {
+                    console.log("중복 로그인 이벤트 방지: 이미 처리됨");
+                }
+            } else {
+                // 사용자가 로그아웃한 경우
+                console.log("로그아웃 상태");
+                window.currentUser = null;
+                window.isAuthStateChangeProcessed = false; // 로그아웃 시 추적 변수 초기화
+            }
+        });
 
         return true;
     } catch (error) {
@@ -66,19 +95,6 @@ window.checkAndSendSavedUserInfo = function() {
     }
 };
 
-// Unity 인스턴스 참조 저장
-window.setUnityInstance = function(instance) {
-    window.unityInstance = instance;
-    console.log("Unity 인스턴스가 저장되었습니다.");
-    
-    // Unity 인스턴스가 저장되면 저장된 사용자 정보 확인 및 전송
-    window.checkAndSendSavedUserInfo();
-    
-    // Unity 인스턴스 준비 완료 이벤트 발생
-    const event = new Event('unityInstanceReady');
-    window.dispatchEvent(event);
-};
-
 // 페이지 로드 완료 시 Firebase 초기화
 window.addEventListener('DOMContentLoaded', function() {
     // Firebase SDK가 로드되었는지 확인
@@ -86,17 +102,5 @@ window.addEventListener('DOMContentLoaded', function() {
         window.initializeFirebase();
     } else {
         console.error("Firebase SDK를 찾을 수 없습니다. Script 태그가 HTML에 포함되어 있는지 확인하세요.");
-    }
-});
-
-// 페이지 표시 상태 감지
-document.addEventListener('visibilitychange', function() {
-    if (!document.hidden && window.firebaseInitialized) {
-        console.log("페이지가 다시 활성화되었습니다. Firebase 연결 상태 확인");
-        
-        // Firebase 인증 상태 확인
-        if (typeof window.checkAuthState === 'function') {
-            window.checkAuthState();
-        }
     }
 });

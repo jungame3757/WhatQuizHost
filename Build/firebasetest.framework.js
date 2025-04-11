@@ -1287,10 +1287,10 @@ function dbg(text) {
 // === Body ===
 
 var ASM_CONSTS = {
-  7568400: () => { Module['emscripten_get_now_backup'] = performance.now; },  
- 7568455: ($0) => { performance.now = function() { return $0; }; },  
- 7568503: ($0) => { performance.now = function() { return $0; }; },  
- 7568551: () => { performance.now = Module['emscripten_get_now_backup']; }
+  7567520: () => { Module['emscripten_get_now_backup'] = performance.now; },  
+ 7567575: ($0) => { performance.now = function() { return $0; }; },  
+ 7567623: ($0) => { performance.now = function() { return $0; }; },  
+ 7567671: () => { performance.now = Module['emscripten_get_now_backup']; }
 };
 
 
@@ -1829,19 +1829,26 @@ var ASM_CONSTS = {
 
   function _GetURLParameter(paramNamePtr) {
           var paramName = UTF8ToString(paramNamePtr);
+          var value = '';
+          
           try {
-              var value = window.getURLParameter(paramName);
-              if (value) {
-                  var bufferSize = lengthBytesUTF8(value) + 1;
-                  var buffer = _malloc(bufferSize);
-                  stringToUTF8(value, buffer, bufferSize);
-                  return buffer;
+              var urlParams = new URLSearchParams(window.location.search);
+              var paramValue = urlParams.get(paramName);
+              
+              if (paramValue) {
+                  value = paramValue;
+                  console.log(`URL 파라미터 가져옴: ${paramName}=${value}`);
+              } else {
+                  console.log(`URL 파라미터 없음: ${paramName}`);
               }
-              return null;
           } catch (e) {
-              console.error("URL 파라미터 가져오기 중 오류 발생:", e);
-              return null;
+              console.error(`URL 파라미터 가져오기 오류: ${e.message}`);
           }
+          
+          var bufferSize = lengthBytesUTF8(value) + 1;
+          var buffer = _malloc(bufferSize);
+          stringToUTF8(value, buffer, bufferSize);
+          return buffer;
       }
 
   function _IsInitialized() {
@@ -18293,8 +18300,6 @@ var dynCall_vffffffi = Module["dynCall_vffffffi"] = createExportWrapper("dynCall
 /** @type {function(...*):?} */
 var dynCall_if = Module["dynCall_if"] = createExportWrapper("dynCall_if");
 /** @type {function(...*):?} */
-var dynCall_d = Module["dynCall_d"] = createExportWrapper("dynCall_d");
-/** @type {function(...*):?} */
 var dynCall_viiiiiiiiiifii = Module["dynCall_viiiiiiiiiifii"] = createExportWrapper("dynCall_viiiiiiiiiifii");
 /** @type {function(...*):?} */
 var dynCall_viiiiiiiiidddddi = Module["dynCall_viiiiiiiiidddddi"] = createExportWrapper("dynCall_viiiiiiiiidddddi");
@@ -18304,6 +18309,8 @@ var dynCall_fiif = Module["dynCall_fiif"] = createExportWrapper("dynCall_fiif");
 var dynCall_iiiiiiffiiiiiiiiiffffiii = Module["dynCall_iiiiiiffiiiiiiiiiffffiii"] = createExportWrapper("dynCall_iiiiiiffiiiiiiiiiffffiii");
 /** @type {function(...*):?} */
 var dynCall_viiffiiiii = Module["dynCall_viiffiiiii"] = createExportWrapper("dynCall_viiffiiiii");
+/** @type {function(...*):?} */
+var dynCall_d = Module["dynCall_d"] = createExportWrapper("dynCall_d");
 
 function invoke_ii(index,a1) {
   var sp = stackSave();
