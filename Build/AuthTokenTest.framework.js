@@ -8544,6 +8544,37 @@ var ASM_CONSTS = {
           }
       }
 
+  function _SignInWithCredential(token, objectName, callback, fallback) {
+          var parsedToken = UTF8ToString(token);
+          var parsedObjectName = UTF8ToString(objectName);
+          var parsedCallback = UTF8ToString(callback);
+          var parsedFallback = UTF8ToString(fallback);
+  
+          try {
+              // Firebase Auth 방식으로 실행
+              if (firebase.auth.GoogleAuthProvider && parsedToken.startsWith('google:')) {
+                  // Google 토큰인 경우
+                  var googleToken = parsedToken.replace('google:', '');
+                  var credential = firebase.auth.GoogleAuthProvider.credential(googleToken);
+                  this.SignInWithCredentialImpl(credential, parsedObjectName, parsedCallback, parsedFallback);
+              } else if (firebase.auth.FacebookAuthProvider && parsedToken.startsWith('facebook:')) {
+                  // Facebook 토큰인 경우
+                  var facebookToken = parsedToken.replace('facebook:', '');
+                  var credential = firebase.auth.FacebookAuthProvider.credential(facebookToken);
+                  this.SignInWithCredentialImpl(credential, parsedObjectName, parsedCallback, parsedFallback);
+              } else {
+                  // ID 토큰으로 간주하고 직접 로그인 시도
+                  firebase.auth().signInWithCustomToken(parsedToken).then(function (userCredential) {
+                      window.unityInstance.SendMessage(parsedObjectName, parsedCallback, JSON.stringify(userCredential.user));
+                  }).catch(function (error) {
+                      window.unityInstance.SendMessage(parsedObjectName, parsedFallback, JSON.stringify(error, Object.getOwnPropertyNames(error)));
+                  });
+              }
+          } catch (error) {
+              window.unityInstance.SendMessage(parsedObjectName, parsedFallback, JSON.stringify(error, Object.getOwnPropertyNames(error)));
+          }
+      }
+
   function _SignInWithCustomToken(token, objectName, callback, fallback) {
           var parsedToken = UTF8ToString(token);
           var parsedObjectName = UTF8ToString(objectName);
@@ -17715,6 +17746,7 @@ var wasmImports = {
   "SetDocument": _SetDocument,
   "SetUserProperties": _SetUserProperties,
   "SignInAnonymously": _SignInAnonymously,
+  "SignInWithCredential": _SignInWithCredential,
   "SignInWithCustomToken": _SignInWithCustomToken,
   "SignInWithEmailAndPassword": _SignInWithEmailAndPassword,
   "SignInWithFacebook": _SignInWithFacebook,
