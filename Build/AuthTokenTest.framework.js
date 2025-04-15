@@ -1283,10 +1283,10 @@ function dbg(text) {
 // === Body ===
 
 var ASM_CONSTS = {
-  7710080: () => { Module['emscripten_get_now_backup'] = performance.now; },  
- 7710135: ($0) => { performance.now = function() { return $0; }; },  
- 7710183: ($0) => { performance.now = function() { return $0; }; },  
- 7710231: () => { performance.now = Module['emscripten_get_now_backup']; }
+  7710208: () => { Module['emscripten_get_now_backup'] = performance.now; },  
+ 7710263: ($0) => { performance.now = function() { return $0; }; },  
+ 7710311: ($0) => { performance.now = function() { return $0; }; },  
+ 7710359: () => { performance.now = Module['emscripten_get_now_backup']; }
 };
 
 
@@ -8551,22 +8551,61 @@ var ASM_CONSTS = {
           var parsedFallback = UTF8ToString(fallback);
   
           try {
+              // 토큰 유효성 기본 검사
+              if (!parsedToken || parsedToken.trim() === '') {
+                  window.unityInstance.SendMessage(parsedObjectName, parsedFallback, JSON.stringify({
+                      code: "auth/invalid-credential",
+                      message: "인증 토큰이 비어 있거나 유효하지 않습니다."
+                  }));
+                  return;
+              }
+              
               // Firebase Auth 방식으로 실행
               if (firebase.auth.GoogleAuthProvider && parsedToken.startsWith('google:')) {
                   // Google 토큰인 경우
                   var googleToken = parsedToken.replace('google:', '');
+                  // Google 토큰 검증
+                  if (!googleToken || googleToken.trim() === '') {
+                      window.unityInstance.SendMessage(parsedObjectName, parsedFallback, JSON.stringify({
+                          code: "auth/invalid-credential",
+                          message: "Google 인증 토큰이 비어 있습니다."
+                      }));
+                      return;
+                  }
                   var credential = firebase.auth.GoogleAuthProvider.credential(googleToken);
                   this.SignInWithCredentialImpl(credential, parsedObjectName, parsedCallback, parsedFallback);
               } else if (firebase.auth.FacebookAuthProvider && parsedToken.startsWith('facebook:')) {
                   // Facebook 토큰인 경우
                   var facebookToken = parsedToken.replace('facebook:', '');
+                  // Facebook 토큰 검증
+                  if (!facebookToken || facebookToken.trim() === '') {
+                      window.unityInstance.SendMessage(parsedObjectName, parsedFallback, JSON.stringify({
+                          code: "auth/invalid-credential",
+                          message: "Facebook 인증 토큰이 비어 있습니다."
+                      }));
+                      return;
+                  }
                   var credential = firebase.auth.FacebookAuthProvider.credential(facebookToken);
                   this.SignInWithCredentialImpl(credential, parsedObjectName, parsedCallback, parsedFallback);
               } else {
+                  // 커스텀 토큰으로 간주하고 검증
+                  var parts = parsedToken.split('.');
+                  if (parts.length !== 3) {
+                      window.unityInstance.SendMessage(parsedObjectName, parsedFallback, JSON.stringify({
+                          code: "auth/invalid-custom-token",
+                          message: "커스텀 토큰이 유효한 JWT 형식이 아닙니다. header.payload.signature 형식이어야 합니다."
+                      }));
+                      return;
+                  }
+                  
                   // ID 토큰으로 간주하고 직접 로그인 시도
                   firebase.auth().signInWithCustomToken(parsedToken).then(function (userCredential) {
                       window.unityInstance.SendMessage(parsedObjectName, parsedCallback, JSON.stringify(userCredential.user));
                   }).catch(function (error) {
+                      // 더 상세한 오류 메시지 추가
+                      if (error.code === 'auth/invalid-custom-token') {
+                          error.detailedMessage = "커스텀 토큰 형식이 잘못되었습니다. Firebase Admin SDK를 사용하여 생성한 유효한 토큰인지 확인하세요.";
+                      }
                       window.unityInstance.SendMessage(parsedObjectName, parsedFallback, JSON.stringify(error, Object.getOwnPropertyNames(error)));
                   });
               }
@@ -8582,9 +8621,34 @@ var ASM_CONSTS = {
           var parsedFallback = UTF8ToString(fallback);
   
           try {
+              // 토큰 유효성 기본 검사 (비어있거나 형식이 잘못된 경우)
+              if (!parsedToken || parsedToken.trim() === '') {
+                  window.unityInstance.SendMessage(parsedObjectName, parsedFallback, JSON.stringify({
+                      code: "auth/invalid-custom-token",
+                      message: "토큰이 비어 있거나 유효하지 않습니다. 유효한 Firebase 커스텀 토큰을 제공해야 합니다."
+                  }));
+                  return;
+              }
+              
+              // JWT 형식 기본 검증 (3개 부분으로 나뉘어져 있는지 확인)
+              var parts = parsedToken.split('.');
+              if (parts.length !== 3) {
+                  window.unityInstance.SendMessage(parsedObjectName, parsedFallback, JSON.stringify({
+                      code: "auth/invalid-custom-token",
+                      message: "토큰이 유효한 JWT 형식이 아닙니다. JWT는 header.payload.signature 형식이어야 합니다."
+                  }));
+                  return;
+              }
+  
               firebase.auth().signInWithCustomToken(parsedToken).then(function (result) {
                   window.unityInstance.SendMessage(parsedObjectName, parsedCallback, "Success: signed in with custom token!");
               }).catch(function (error) {
+                  // 더 상세한 오류 메시지 추가
+                  if (error.code === 'auth/invalid-custom-token') {
+                      error.detailedMessage = "커스텀 토큰 형식이 잘못되었습니다. Firebase Admin SDK를 사용하여 생성한 유효한 토큰인지 확인하세요.";
+                  } else if (error.code === 'auth/credential-already-in-use') {
+                      error.detailedMessage = "이미 사용 중인 인증 정보입니다.";
+                  }
                   window.unityInstance.SendMessage(parsedObjectName, parsedFallback, JSON.stringify(error, Object.getOwnPropertyNames(error)));
               });
   
