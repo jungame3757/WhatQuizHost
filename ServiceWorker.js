@@ -1,9 +1,9 @@
-const cacheName = "DefaultCompany-WhatQuizBase-1.0";
+const cacheName = "DefaultCompany-WhatQuizSDK-1.0";
 const contentToCache = [
-    "Build/firebasetest.loader.js",
-    "Build/firebasetest.framework.js",
-    "Build/firebasetest.data",
-    "Build/firebasetest.wasm",
+    "Build/AuthTokenTest.loader.js",
+    "Build/AuthTokenTest.framework.js",
+    "Build/AuthTokenTest.data",
+    "Build/AuthTokenTest.wasm",
     "TemplateData/style.css"
 
 ];

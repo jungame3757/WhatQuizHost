@@ -1,11 +1,11 @@
 {
-    "name": "WhatQuizBase",
-    "short_name": "WhatQuizBase",
+    "name": "WhatQuizSDK",
+    "short_name": "WhatQuizSDK",
     "start_url": "index.html",
     "display": "fullscreen",
     "background_color": "#231F20",
     "theme_color": "#000",
-    "description": "",
+    "description": "WhatQuiz Application",
     "icons": [{
       "src": "TemplateData/icons/unity-logo-dark.png",
       "sizes": "144x144",
