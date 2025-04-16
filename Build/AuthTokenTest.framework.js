@@ -1283,10 +1283,10 @@ function dbg(text) {
 // === Body ===
 
 var ASM_CONSTS = {
-  7708384: () => { Module['emscripten_get_now_backup'] = performance.now; },  
- 7708439: ($0) => { performance.now = function() { return $0; }; },  
- 7708487: ($0) => { performance.now = function() { return $0; }; },  
- 7708535: () => { performance.now = Module['emscripten_get_now_backup']; }
+  7708416: () => { Module['emscripten_get_now_backup'] = performance.now; },  
+ 7708471: ($0) => { performance.now = function() { return $0; }; },  
+ 7708519: ($0) => { performance.now = function() { return $0; }; },  
+ 7708567: () => { performance.now = Module['emscripten_get_now_backup']; }
 };
 
 
@@ -8333,6 +8333,7 @@ var ASM_CONSTS = {
         
         // 새 창에서 URL 열기
         var opened = window.open(url, '_blank');
+        
         // 팝업 차단 확인
         if (!opened) {
           console.error("팝업이 차단되었거나 URL을 열 수 없습니다.");
@@ -8340,6 +8341,11 @@ var ASM_CONSTS = {
       } catch (error) {
         console.error("OpenURL 오류:", error);
       }
+    }
+
+  function _OpenURLInSameWindow(url) {
+      var parsedUrl = UTF8ToString(url);
+      window.location.replace(parsedUrl);
     }
 
   function _PostJSON(path, value, objectName, callback, fallback) {
@@ -17624,6 +17630,7 @@ var wasmImports = {
   "ModifyNumberWithTransaction": _ModifyNumberWithTransaction,
   "OnAuthStateChanged": _OnAuthStateChanged,
   "OpenURL": _OpenURL,
+  "OpenURLInSameWindow": _OpenURLInSameWindow,
   "PostJSON": _PostJSON,
   "PushJSON": _PushJSON,
   "RemoveElementInArrayField": _RemoveElementInArrayField,
