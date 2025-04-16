@@ -1283,10 +1283,10 @@ function dbg(text) {
 // === Body ===
 
 var ASM_CONSTS = {
-  7708624: () => { Module['emscripten_get_now_backup'] = performance.now; },  
- 7708679: ($0) => { performance.now = function() { return $0; }; },  
- 7708727: ($0) => { performance.now = function() { return $0; }; },  
- 7708775: () => { performance.now = Module['emscripten_get_now_backup']; }
+  7708864: () => { Module['emscripten_get_now_backup'] = performance.now; },  
+ 7708919: ($0) => { performance.now = function() { return $0; }; },  
+ 7708967: ($0) => { performance.now = function() { return $0; }; },  
+ 7709015: () => { performance.now = Module['emscripten_get_now_backup']; }
 };
 
 
@@ -20269,6 +20269,17 @@ function invoke_jiiiiiiiiii(index,a1,a2,a3,a4,a5,a6,a7,a8,a9,a10) {
   }
 }
 
+function invoke_vji(index,a1,a2,a3) {
+  var sp = stackSave();
+  try {
+    dynCall_vji(index,a1,a2,a3);
+  } catch(e) {
+    stackRestore(sp);
+    if (!(e instanceof EmscriptenEH)) throw e;
+    _setThrew(1, 0);
+  }
+}
+
 function invoke_iiji(index,a1,a2,a3,a4) {
   var sp = stackSave();
   try {
@@ -20295,17 +20306,6 @@ function invoke_iiiiiiiiiji(index,a1,a2,a3,a4,a5,a6,a7,a8,a9,a10,a11) {
   var sp = stackSave();
   try {
     return dynCall_iiiiiiiiiji(index,a1,a2,a3,a4,a5,a6,a7,a8,a9,a10,a11);
-  } catch(e) {
-    stackRestore(sp);
-    if (!(e instanceof EmscriptenEH)) throw e;
-    _setThrew(1, 0);
-  }
-}
-
-function invoke_vji(index,a1,a2,a3) {
-  var sp = stackSave();
-  try {
-    dynCall_vji(index,a1,a2,a3);
   } catch(e) {
     stackRestore(sp);
     if (!(e instanceof EmscriptenEH)) throw e;
