@@ -1283,10 +1283,10 @@ function dbg(text) {
 // === Body ===
 
 var ASM_CONSTS = {
-  7714048: () => { Module['emscripten_get_now_backup'] = performance.now; },  
- 7714103: ($0) => { performance.now = function() { return $0; }; },  
- 7714151: ($0) => { performance.now = function() { return $0; }; },  
- 7714199: () => { performance.now = Module['emscripten_get_now_backup']; }
+  7721344: () => { Module['emscripten_get_now_backup'] = performance.now; },  
+ 7721399: ($0) => { performance.now = function() { return $0; }; },  
+ 7721447: ($0) => { performance.now = function() { return $0; }; },  
+ 7721495: () => { performance.now = Module['emscripten_get_now_backup']; }
 };
 
 
@@ -1904,6 +1904,45 @@ var ASM_CONSTS = {
               window.unityInstance.SendMessage(parsedObjectName, parsedFallback, JSON.stringify(error, Object.getOwnPropertyNames(error)));
           }
       }
+
+  function _GetQRCodeByURL(urlPtr, sizePtr, callbackGameObjectPtr, callbackMethodPtr) {
+      try {
+        var url = UTF8ToString(urlPtr);
+        var size = UTF8ToString(sizePtr);
+        var callbackGameObject = UTF8ToString(callbackGameObjectPtr);
+        var callbackMethod = UTF8ToString(callbackMethodPtr);
+        
+        // Google Chart API를 사용하여 QR 코드 생성
+        var qrCodeUrl = "https://chart.googleapis.com/chart?cht=qr&chs=" + size + "x" + size + "&chl=" + encodeURIComponent(url);
+        
+        // 이미지 다운로드
+        var img = new Image();
+        img.crossOrigin = "Anonymous";
+        img.onload = function() {
+          var canvas = document.createElement('canvas');
+          canvas.width = img.width;
+          canvas.height = img.height;
+          var ctx = canvas.getContext('2d');
+          ctx.drawImage(img, 0, 0);
+          
+          // Base64 데이터 URL 생성
+          var dataUrl = canvas.toDataURL('image/png');
+          
+          // Unity에 콜백 전송
+          unityInstance.SendMessage(callbackGameObject, callbackMethod, dataUrl);
+        };
+        
+        img.onerror = function() {
+          console.error("QR 코드 이미지 로드 실패");
+          unityInstance.SendMessage(callbackGameObject, callbackMethod, "");
+        };
+        
+        img.src = qrCodeUrl;
+      } catch (error) {
+        console.error("GetQRCodeByURL 오류:", error);
+        unityInstance.SendMessage(callbackGameObject, callbackMethod, "");
+      }
+    }
 
   function _IncrementFieldValue(collectionPath, documentId, field, increment, objectName, callback, fallback) {
           var parsedPath = UTF8ToString(collectionPath);
@@ -17518,6 +17557,7 @@ var wasmImports = {
   "GetJSLoadTimeInfo": _GetJSLoadTimeInfo,
   "GetJSMemoryInfo": _GetJSMemoryInfo,
   "GetJSON": _GetJSON,
+  "GetQRCodeByURL": _GetQRCodeByURL,
   "IncrementFieldValue": _IncrementFieldValue,
   "JS_Accelerometer_IsRunning": _JS_Accelerometer_IsRunning,
   "JS_Accelerometer_Start": _JS_Accelerometer_Start,
@@ -17985,6 +18025,7 @@ var wasmImports = {
   "invoke_vffi": invoke_vffi,
   "invoke_vfi": invoke_vfi,
   "invoke_vi": invoke_vi,
+  "invoke_vidd": invoke_vidd,
   "invoke_vidi": invoke_vidi,
   "invoke_vifffi": invoke_vifffi,
   "invoke_viffi": invoke_viffi,
@@ -19038,6 +19079,8 @@ var dynCall_iijjiii = Module["dynCall_iijjiii"] = createExportWrapper("dynCall_i
 /** @type {function(...*):?} */
 var dynCall_vijjjii = Module["dynCall_vijjjii"] = createExportWrapper("dynCall_vijjjii");
 /** @type {function(...*):?} */
+var dynCall_vidd = Module["dynCall_vidd"] = createExportWrapper("dynCall_vidd");
+/** @type {function(...*):?} */
 var dynCall_viid = Module["dynCall_viid"] = createExportWrapper("dynCall_viid");
 /** @type {function(...*):?} */
 var dynCall_iiiiiifff = Module["dynCall_iiiiiifff"] = createExportWrapper("dynCall_iiiiiifff");
@@ -20012,6 +20055,17 @@ function invoke_viiff(index,a1,a2,a3,a4) {
   var sp = stackSave();
   try {
     dynCall_viiff(index,a1,a2,a3,a4);
+  } catch(e) {
+    stackRestore(sp);
+    if (!(e instanceof EmscriptenEH)) throw e;
+    _setThrew(1, 0);
+  }
+}
+
+function invoke_vidd(index,a1,a2,a3) {
+  var sp = stackSave();
+  try {
+    dynCall_vidd(index,a1,a2,a3);
   } catch(e) {
     stackRestore(sp);
     if (!(e instanceof EmscriptenEH)) throw e;
