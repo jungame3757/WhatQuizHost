@@ -1,9 +1,9 @@
 const cacheName = "DefaultCompany-WhatQuizSDK-1.0";
 const contentToCache = [
-    "Build/AuthTokenTest.loader.js",
-    "Build/AuthTokenTest.framework.js",
-    "Build/AuthTokenTest.data",
-    "Build/AuthTokenTest.wasm",
+    "Build/WhatQuizHost.loader.js",
+    "Build/WhatQuizHost.framework.js",
+    "Build/WhatQuizHost.data",
+    "Build/WhatQuizHost.wasm",
     "TemplateData/style.css"
 
 ];
