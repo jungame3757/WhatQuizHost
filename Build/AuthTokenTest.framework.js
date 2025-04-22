@@ -1283,10 +1283,10 @@ function dbg(text) {
 // === Body ===
 
 var ASM_CONSTS = {
-  7722256: () => { Module['emscripten_get_now_backup'] = performance.now; },  
- 7722311: ($0) => { performance.now = function() { return $0; }; },  
- 7722359: ($0) => { performance.now = function() { return $0; }; },  
- 7722407: () => { performance.now = Module['emscripten_get_now_backup']; }
+  7722320: () => { Module['emscripten_get_now_backup'] = performance.now; },  
+ 7722375: ($0) => { performance.now = function() { return $0; }; },  
+ 7722423: ($0) => { performance.now = function() { return $0; }; },  
+ 7722471: () => { performance.now = Module['emscripten_get_now_backup']; }
 };
 
 
@@ -1690,6 +1690,62 @@ var ASM_CONSTS = {
               window.unityInstance.SendMessage(parsedObjectName, parsedFallback, JSON.stringify(error, Object.getOwnPropertyNames(error)));
           }
       }
+
+  function _CopyURLToClipboard(textPtr) {
+      try {
+        var text = UTF8ToString(textPtr);
+        console.log("클립보드에 복사: " + text);
+        
+        // 다양한 브라우저 환경에서 클립보드 복사를 지원하기 위한 방법들
+        
+        // 방법 1: 새로운 Clipboard API 사용 (최신 브라우저)
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText(text)
+            .then(function() {
+              console.log("클립보드에 복사 성공 (Clipboard API)");
+            })
+            .catch(function(err) {
+              console.error("클립보드 복사 실패 (Clipboard API): ", err);
+              // 실패 시 대체 방법 사용
+              copyUsingFallback(text);
+            });
+          return;
+        }
+        
+        // 방법 2: 구형 브라우저를 위한 대체 방법
+        copyUsingFallback(text);
+        
+        function copyUsingFallback(text) {
+          // textarea 요소 생성
+          var textArea = document.createElement("textarea");
+          textArea.value = text;
+          
+          // 화면에 보이지 않게 설정
+          textArea.style.position = "fixed";
+          textArea.style.left = "-999999px";
+          textArea.style.top = "-999999px";
+          document.body.appendChild(textArea);
+          
+          // 텍스트 선택 및 복사
+          textArea.focus();
+          textArea.select();
+          
+          var success = false;
+          try {
+            // 복사 명령 실행
+            success = document.execCommand("copy");
+            console.log(success ? "클립보드에 복사 성공 (execCommand)" : "클립보드에 복사 실패 (execCommand)");
+          } catch (err) {
+            console.error("클립보드 복사 중 오류: ", err);
+          }
+          
+          // 임시 요소 제거
+          document.body.removeChild(textArea);
+        }
+      } catch (error) {
+        console.error("클립보드 복사 중 오류: ", error);
+      }
+    }
 
   function _CreateUserWithEmailAndPassword(email, password, objectName, callback, fallback) {
           var parsedEmail = UTF8ToString(email);
@@ -17537,6 +17593,7 @@ function checkIncomingModuleAPI() {
 var wasmImports = {
   "AddDocument": _AddDocument,
   "AddElementInArrayField": _AddElementInArrayField,
+  "CopyURLToClipboard": _CopyURLToClipboard,
   "CreateUserWithEmailAndPassword": _CreateUserWithEmailAndPassword,
   "DeleteDocument": _DeleteDocument,
   "DeleteField": _DeleteField,
