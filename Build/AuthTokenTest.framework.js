@@ -1908,36 +1908,72 @@ var ASM_CONSTS = {
   function _GetQRCodeByURL(urlPtr, sizePtr, callbackGameObjectPtr, callbackMethodPtr) {
       try {
         var url = UTF8ToString(urlPtr);
-        var size = UTF8ToString(sizePtr);
+        var size = parseInt(UTF8ToString(sizePtr));
         var callbackGameObject = UTF8ToString(callbackGameObjectPtr);
         var callbackMethod = UTF8ToString(callbackMethodPtr);
         
-        // Google Chart API를 사용하여 QR 코드 생성
-        var qrCodeUrl = "https://chart.googleapis.com/chart?cht=qr&chs=" + size + "x" + size + "&chl=" + encodeURIComponent(url);
+        // QR 코드 표시를 위한 요소 생성 또는 가져오기
+        let qrElement = document.getElementById('qr-code');
+        if (!qrElement) {
+          // QR 코드 표시를 위한 요소 생성
+          const qrContainer = document.createElement('div');
+          qrContainer.id = 'qr-code-container';
+          qrContainer.style.display = 'none';
+          qrContainer.style.position = 'absolute';
+          qrContainer.style.zIndex = '999';
+          qrContainer.innerHTML = '<div id="qr-code"></div>';
+          document.body.appendChild(qrContainer);
+          qrElement = document.getElementById('qr-code');
+        }
         
-        // 이미지 다운로드
-        var img = new Image();
-        img.crossOrigin = "Anonymous";
-        img.onload = function() {
-          var canvas = document.createElement('canvas');
-          canvas.width = img.width;
-          canvas.height = img.height;
-          var ctx = canvas.getContext('2d');
-          ctx.drawImage(img, 0, 0);
-          
-          // Base64 데이터 URL 생성
-          var dataUrl = canvas.toDataURL('image/png');
-          
-          // Unity에 콜백 전송
-          unityInstance.SendMessage(callbackGameObject, callbackMethod, dataUrl);
-        };
+        // QRCode.js 라이브러리 로드 확인 및 로드
+        if (typeof QRCode === 'undefined') {
+          console.log("QRCode 라이브러리 로드 중...");
+          var script = document.createElement('script');
+          script.src = 'https://cdn.jsdelivr.net/npm/qrcode@1.5.1/build/qrcode.min.js';
+          script.onload = function() {
+            console.log("QRCode 라이브러리 로드 완료");
+            generateQR();
+          };
+          script.onerror = function() {
+            console.error("QRCode 라이브러리 로드 실패");
+            unityInstance.SendMessage(callbackGameObject, callbackMethod, "");
+          };
+          document.head.appendChild(script);
+        } else {
+          generateQR();
+        }
         
-        img.onerror = function() {
-          console.error("QR 코드 이미지 로드 실패");
-          unityInstance.SendMessage(callbackGameObject, callbackMethod, "");
-        };
-        
-        img.src = qrCodeUrl;
+        function generateQR() {
+          try {
+            // 기존 QR 코드 제거
+            qrElement.innerHTML = '';
+            
+            // 새 QR 코드 생성
+            new QRCode(qrElement, {
+              text: url,
+              width: size,
+              height: size,
+              colorDark: "#000000",
+              colorLight: "#ffffff",
+              correctLevel: QRCode.CorrectLevel.H
+            });
+            
+            // Unity에 QR 코드 이미지 데이터 전달
+            setTimeout(() => {
+              try {
+                const imgData = qrElement.querySelector('img').src;
+                unityInstance.SendMessage(callbackGameObject, callbackMethod, imgData);
+              } catch (e) {
+                console.error('QR 코드 이미지 데이터 전송 중 오류:', e);
+                unityInstance.SendMessage(callbackGameObject, callbackMethod, "");
+              }
+            }, 100);
+          } catch (e) {
+            console.error("QR 코드 생성 중 오류:", e);
+            unityInstance.SendMessage(callbackGameObject, callbackMethod, "");
+          }
+        }
       } catch (error) {
         console.error("GetQRCodeByURL 오류:", error);
         unityInstance.SendMessage(callbackGameObject, callbackMethod, "");
