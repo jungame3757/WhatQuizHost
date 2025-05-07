@@ -1,9 +1,9 @@
 const cacheName = "DefaultCompany-WhatQuizSDK-1.0";
 const contentToCache = [
-    "Build/b8259b2cb014421fb7f4a6a68a990269.loader.js",
-    "Build/c1b34f83e828a53b2a437f2d278f9cd4.framework.js",
-    "Build/ef829840041ecfe340b479aa0e0796d5.data",
-    "Build/a9cdd43f5c9c99f7e9b930e761fcd476.wasm",
+    "Build/9da0c40c2d2f31cbae36cf621d840458.loader.js",
+    "Build/6e29614c52a3b110ee1a893b30f9c62d.framework.js",
+    "Build/16de2ab044eff584c1155d6dd57e6701.data",
+    "Build/52d86913273310007dd0f4d0eaef51d7.wasm",
     "TemplateData/style.css"
 
 ];
